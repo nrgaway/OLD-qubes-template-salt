@@ -1,0 +1,67 @@
+#!/bin/bash -e
+# vim: set ts=4 sw=4 sts=4 et :
+
+##
+## bind-directories will bind mount a list of directories
+##
+## Pass space seperated list 'olddir:newdir'
+##
+## To umount all binds, just pass '--umount' as first arg
+##
+## Example:
+## bind-directories '/rw/usrlocal/srv/salt:/srv/salt' /rw/usrlocal/srv/pillar:/srv/pillar '/rw/usrlocal/etc/salt:/etc/salt'
+##
+
+
+case $1 in
+    --help)
+        echo
+        echo "bind-directories will bind mount a list of directories"
+        echo
+        echo "bind-directories [--help]"
+        echo "bind-directories [--umount] old:newdir [olddir:newdir]"
+        echo
+        echo "Example:"
+        echo "bind-directories '/rw/usrlocal/srv/salt:/srv/salt' /rw/usrlocal/srv/pillar:/srv/pillar"
+        echo "bind-directories --umount '/rw/usrlocal/srv/salt:/srv/salt' /rw/usrlocal/srv/pillar:/srv/pillar"
+        echo
+        exit 0
+        ;;
+        
+    --umount)
+        UMOUNT=1
+        shift
+        ;;
+esac
+
+## Bind directories
+for bind in $@; do
+    rw_dir="${bind%%:*}"
+    ro_dir="${bind##*:}"
+
+    # Make sure ro directory is not mounted
+    umount "${ro_dir}" 2> /dev/null || true
+
+    if [ "${UMOUNT}" == "1" ]; then
+        echo "Umounting only..."
+        exit 0
+    fi
+
+    # Make sure ro directory exists
+    if ! [ -d "${ro_dir}" ]; then
+        mkdir -p "${ro_dir}" 
+    fi
+
+    # Initially copy over data directories to /rw if rw directory does not exist
+    if ! [ -d "${rw_dir}" ]; then
+        mkdir -p "${rw_dir}"
+        rsync -hax "${ro_dir}/." "${rw_dir}"
+    fi
+    
+    # Bind the directory
+    sync
+    mount --bind "${rw_dir}" "${ro_dir}"
+done
+sync
+
+exit 0

@@ -3,7 +3,7 @@
 
 INSTALLDIR=/
 
-BUILD_DEPS="vim git ca-certificates lsb-release"
+BUILD_DEPS="vim git ca-certificates lsb-release rsync"
 
 retval() {
     local ret_val=$1
@@ -12,19 +12,37 @@ retval() {
     fi
 }
 
+## Determine OS version
+if [ -f "/etc/os-release" ]; then
+    source /etc/os-release
+else
+    echo "/etc/os-release file does not exist so can not determine OS type"
+    echo "Exiting..."
+    exit 1
+fi
+
 # -----------------------------------------------------------------------------
 # Build Depends
 # -----------------------------------------------------------------------------
 if ! [ -f /tmp/.salt.build_deps ]; then
     RETVAL=0
+    if [ "$ID" == "debian" -o "$ID" == "ubuntu" ]; then
+        DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+            chroot "${INSTALLDIR}" apt-get update
+        retval $?
 
-    DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-        chroot "${INSTALLDIR}" apt-get update
-    retval $?
-
-    DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-        chroot "${INSTALLDIR}" apt-get -y --force-yes install ${BUILD_DEPS}
-    retval $?
+        DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+            chroot "${INSTALLDIR}" apt-get -y --force-yes install ${BUILD_DEPS}
+        retval $?
+    elif [ "$ID" == "fedora" ]; then
+        yum install -y ${BUILD_DEPS}
+        retval $?
+    else
+        echo "Exiting Build and Installation of salt"
+        echo "The operating system id is listed as: $id"
+        echo "And this script has only been tested to work on fedora, debian or ubuntu"
+        exit 1
+    fi
 
     if [ $RETVAL == 0 ]; then
         touch /tmp/.salt.build_deps
@@ -34,7 +52,7 @@ fi
 # -----------------------------------------------------------------------------
 # Clone salt bootstrap
 # -----------------------------------------------------------------------------
-if ! [ -f /tmp/.salt.cloned ]; then
+if [ /tmp/.salt.build_deps -a ! -f /tmp/.salt.cloned ]; then
     RETVAL=0
 
     git clone https://github.com/saltstack/salt-bootstrap.git
@@ -74,11 +92,11 @@ fi
 #======================================================================================================================
 
 # -----------------------------------------------------------------------------
-if ! [ -f /tmp/.salt.bootstrap ]; then
+if [ /tmp/.salt.cloned -a ! -f /tmp/.salt.bootstrap ]; then
     RETVAL=0
 
     pushd salt-bootstrap
-    ./bootstrap-salt.sh -D -U -X -M git v2014.7.0rc6
+    ./bootstrap-salt.sh -D -U -X -M git v2014.7.0
     retval $?
     popd
 
@@ -86,3 +104,38 @@ if ! [ -f /tmp/.salt.bootstrap ]; then
         touch /tmp/.salt.bootstrap
     fi
 fi
+
+# -----------------------------------------------------------------------------
+# Bind /rw dirs to salt dirs
+# -----------------------------------------------------------------------------
+install --owner=root --group=root --mode=0755 bind-directories /rw/usrlocal/bin
+#/rw/usrlocal/bin/bind-directories /rw/usrlocal/srv/salt:/srv/salt /rw/usrlocal/srv/pillar:/srv/pillar /rw/usrlocal/etc/salt:/etc/salt
+
+# -----------------------------------------------------------------------------
+# Install modified salt-* unit files
+# -----------------------------------------------------------------------------
+systemctl stop salt-api
+systemctl disable salt-api
+
+systemctl stop salt-minion
+systemctl disable salt-minion
+
+systemctl stop salt-syndic
+systemctl disable salt-syndic
+
+systemctl stop salt-master
+systemctl disable salt-master
+
+install --owner=root --group=root --mode=0644 salt-master.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 salt-minion.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 salt-syndic.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 salt-api.service /etc/systemd/system
+
+systemctl enable salt-master
+systemctl enable salt-minion
+systemctl enable salt-api
+
+systemctl start salt-master
+systemctl start salt-minion
+systemctl start salt-api
+

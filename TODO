@@ -1,0 +1,11 @@
+TODO
+----
+
+- Initially populate srv with a few salt states
+- get git mounts working too
+
+GPG
+---
+- need to be able to sign git commits;
+- need to be able to push key for others
+- one state will grab stuff from my repo; need to verify tag as well though

@@ -108,7 +108,7 @@ fi
 # -----------------------------------------------------------------------------
 # Bind /rw dirs to salt dirs
 # -----------------------------------------------------------------------------
-install --owner=root --group=root --mode=0755 files/bind-directories /rw/usrlocal/bin
+install --owner=root --group=root --mode=0755 files/salt/salt/files/bind-directories /rw/usrlocal/bin
 /rw/usrlocal/bin/bind-directories /rw/usrlocal/srv/salt:/srv/salt /rw/usrlocal/srv/pillar:/srv/pillar /rw/usrlocal/etc/salt:/etc/salt
 
 # -----------------------------------------------------------------------------
@@ -126,26 +126,39 @@ function systemctl() {
 systemctl stop salt-api salt-minion salt-syndic salt-master
 systemctl disable salt-api salt-minion salt-syndic salt-master
 
-install --owner=root --group=root --mode=0644 files/salt-master.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 files/salt-minion.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 files/salt-syndic.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 files/salt-api.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-master.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-minion.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-syndic.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-api.service /etc/systemd/system
 
-install --owner=root --group=root --mode=0640 files/master /etc/salt
-install --owner=root --group=root --mode=0640 files/minion /etc/salt
+install --owner=root --group=root --mode=0640 files/salt/salt/files/master /etc/salt
+install --owner=root --group=root --mode=0640 files/salt/salt/files/minion /etc/salt
 install -d --owner=root --group=root --mode=0750 /etc/salt/master.d
 install -d --owner=root --group=root --mode=0750 /etc/salt/minion.d
-install --owner=root --group=root --mode=0640 files/master.d/* /etc/salt/master.d || true
-install --owner=root --group=root --mode=0640 files/minion.d/* /etc/salt/minion.d || true
+install --owner=root --group=root --mode=0640 files/salt/salt/files/master.d/* /etc/salt/master.d || true
+install --owner=root --group=root --mode=0640 files/salt/salt/files/minion.d/* /etc/salt/minion.d || true
 
 install -d --owner=root --group=root --mode=0750 /srv/salt
 install -d --owner=root --group=root --mode=0750 /srv/pillar
 install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
-install --owner=root --group=root --mode=0640 files/salt/* /srv/salt || true
-install --owner=root --group=root --mode=0640 files/pillar/* /srv/pillar || true
+
+#install --owner=root --group=root --mode=0640 files/salt/* /srv/salt || true
+#install --owner=root --group=root --mode=0640 files/pillar/* /srv/pillar || true
+cp -r files/salt/* /srv/salt || true
+cp -r files/pillar/* /srv/pillar || true
+chmod -R u=rwX,g=rX,o-wrxX /srv/salt
+chmod -R u=rwX,g=rX,o-wrxX /srv/pillar
 
 ln -sf /var/cache/salt/minion/files/base /srv/formulas
 
 systemctl enable salt-master salt-minion salt-api
 systemctl start salt-master salt-minion salt-api
 
+# Give time for minion to be authorized
+echo "Sleeping for 15 seconds..."
+sleep 15
+
+# Instead of auto-accepting minions; just do it here
+#salt-key -y -A
+
+#salt '*' state.highstate -l debug

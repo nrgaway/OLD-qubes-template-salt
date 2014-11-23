@@ -1,5 +1,18 @@
 TODO
+====
+
+NEXT
 ----
+- Add pip and salt states to initial bootstrap
+- Use mine to start, then mixin the pillar formula one
+- get halite working; add rootfs to my source directory
+- Maybe I should actually place salt + pip in seperate git package and install that 
+  so it can be updated; or maybe this one is the package; just rework directories
+  hmm, kinda like this being the formula; just happens to contain bootstrap too
+- OK... this package will get copied or cloned to /srv/salt
+  - then use custom salt/master.d file with salt bootstrap
+  - want MINIMUM script here, then use salt to configure itself
+
 
 - May need to create PKI file
 - Need to auth minion to master
@@ -11,13 +24,15 @@ ISSUES
 ------
 - minion gitfs does not seem to work well with salt-call
   - search gitfs minion salt-call
-    - google
     - google groups
-- can't seem to locate gitfs in /srv/formulas for inrospection
+      https://github.com/saltstack/salt/issues/6660
+      https://github.com/saltstack/salt/issues/17963
+  - OK, it will work kinda; see issues above.  Just jinja not able to search cache path
+    so we can wait for a fix and just use master/minion for now
 
-GITFS
------
-- We can just end up writing own gitfs to grab; update and verify and store in /srv/salt
+- can't seem to locate gitfs in /srv/formulas for inrospection
+  Looks like it will never show there; created a soft-link for now; maybe better just to checkout
+  modules in that directory instead
 
 GPG
 ---
@@ -25,6 +40,12 @@ GPG
 - need to be able to push key for others
 - one state will grab stuff from my repo; need to verify tag as well though
 
+NFS
+---
+- currenty the code in pillar can go into a state file
+  - need module
+  - need state module too
+  - once that working; move back to pillar
 
 SALT-MASTER
 -----------
@@ -35,6 +56,9 @@ SALT-MASTER
 
 HALITE
 ------
+- maybe create a sls.info / sls.index file for each package that will contain name, description, etc
+  - also allow a global file so we can create info for formula that don't support this format yet
+- Hmm, any configurations can go into a pillar! (like sw configs); editable in gui
 - halite will also be included
 - halite can either read top.sls or walk the salt base to be able to provide GUI to enable/disable states
 

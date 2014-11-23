@@ -1,11 +1,47 @@
 TODO
 ----
 
+- May need to create PKI file
+- Need to auth minion to master
+
 - Initially populate srv with a few salt states
 - get git mounts working too
+
+ISSUES
+------
+- minion gitfs does not seem to work well with salt-call
+  - search gitfs minion salt-call
+    - google
+    - google groups
+- can't seem to locate gitfs in /srv/formulas for inrospection
+
+GITFS
+-----
+- We can just end up writing own gitfs to grab; update and verify and store in /srv/salt
 
 GPG
 ---
 - need to be able to sign git commits;
 - need to be able to push key for others
 - one state will grab stuff from my repo; need to verify tag as well though
+
+
+SALT-MASTER
+-----------
+- Once bootstrapped, get salt server to grab git repo to install EVERYTHING else we want
+  so we will need to create some type of install state which will include salt server states
+  so it can update itself
+- during this installation; add packages to top.sls, but commented out
+
+HALITE
+------
+- halite will also be included
+- halite can either read top.sls or walk the salt base to be able to provide GUI to enable/disable states
+
+QUBES-RPC
+---------
+- create a master AppVM that communicates via RPC and have master have no networking by default; except to update
+
+NOTES
+-----
+- autoaccept is on (localhost only); turn off after initial update

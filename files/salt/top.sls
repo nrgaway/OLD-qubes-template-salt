@@ -1,5 +1,6 @@
 #
 # salt-call --local state.highstate
+# salt '*' state.highstate -l debug
 #
 
 base:

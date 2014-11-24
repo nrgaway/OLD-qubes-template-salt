@@ -1,16 +1,25 @@
+#!yamlscript
+
 ##
 # python-pip
-#
+##
 
-pip-dependencies:
+$defaults: False
+$pillars:
+  auto: False
+
+$python: |
+    from salt://python_pip/map.sls import PipMap
+    
+    pip_dependencies = PipMap.python_pip + \
+                       PipMap.python_dev + \
+                       PipMap.python_virtualenv + \
+                       PipMap.build_essential
+
+$with pip-dependencies:
   pkg.installed:
-    - names:
-      - python-pip
-      - python-dev
-      - python-virtualenv
-      - build-essential
+    - names: $pip_dependencies
 
-virtualenvwrapper:
-  pip.installed:
-    - require:
-      - pkg: pip-dependencies
+  virtualenvwrapper:
+    pip.installed:
+        - pkg: pip-dependencies

@@ -55,7 +55,12 @@ fi
 if [ /tmp/.salt.build_deps -a ! -f /tmp/.salt.cloned ]; then
     RETVAL=0
 
-    git clone https://github.com/saltstack/salt-bootstrap.git
+    # XXX: Specify a specific tag so we don't run into regrerssion errors
+    # XXX: Need to verify git signatures
+
+    if [ ! -d ./salt-bootstrap ]; then
+        git clone https://github.com/saltstack/salt-bootstrap.git
+    fi
 
     retval $?
     if [ $RETVAL == 0 ]; then

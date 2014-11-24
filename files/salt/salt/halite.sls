@@ -1,3 +1,5 @@
+#!yamlscript
+
 ##
 # salt-halite
 # -----------
@@ -7,15 +9,23 @@
 # TODO:  Start it; not sure how to do it yet without using cmd
 ##
 
-include:
-  - salt.master
+$defaults: False
+$pillars:
+  auto: False
+
+$python: |
+    from salt://salt/map.sls import SaltMap
+
+# XXX: yamlscript bug; including a file already processed will give dup keys!
+#include:
+#  - salt.master
 
 salt-halite-dependencies:
   pkg.installed:
     - names:
       - gcc
-      - python-dev
-      - libevent-dev
+      - $SaltMap.python_dev
+      - $SaltMap.libevent_dev
 
 salt-halite-pip-dependencies:
   pip.installed:

@@ -16,15 +16,15 @@ salt-minion:
       - pip: salt
     - watch:
       - file: /etc/salt/minion
-      - file: /etc/init.d/salt-minion
+      - file: /etc/systemd/system/salt-minion.service
 
-# salt-minion init file
-#/etc/init.d/salt-minion:
-#  file.managed:
-#    - source: salt://salt/files/minion.init
-#    - user: root
-#    - group: root
-#    - mode: 755
+# salt-minion unit file
+/etc/systemd/system/salt-minion.service:
+  file.managed:
+    - source: salt://salt/files/salt-minion.service
+    - user: root
+    - group: root
+    - mode: 755
 
 # salt-minion configuration file
 /etc/salt/minion:

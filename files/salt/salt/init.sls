@@ -1,15 +1,23 @@
+#!yamlscript
+
 ##
 # Install salt base
-#
 ##
 
+$defaults: False
+$pillars:
+  auto: False
+
+$python: |
+    from salt://salt/map.sls import SaltMap
+    
 salt-dependencies:
   pkg.installed:
     - names:
       - git
       - python
-      - python-dev
-      - python-m2crypto
+      - $SaltMap.python_dev
+      - $SaltMap.python_m2crypto
     - require:
       - pkg: pip-dependencies
       #- python-jinja2    # APT: 2.7.2-2
@@ -26,12 +34,11 @@ salt-pip-dependencies:
     - require:
       - pkg: salt-dependencies
 
-# Install development version from git
+# Install from git
 salt:
   pip.installed:
     - name: salt 
-    #- editable: "git+https://github.com/saltstack/salt.git@develop#egg=salt"
-    - editable: "git+https://github.com/saltstack/salt.git@2014.7#egg=salt"
+    - editable: "git+https://github.com/saltstack/salt.git@v2014.7.0#egg=salt"
     - no_deps: True # We satisfy deps already since we cant build m2crypto on debian/ubuntu
     #- install_options: "--prefix=/usr --force-installation-into-system-dir"
     - upgrade: True

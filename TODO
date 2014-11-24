@@ -1,8 +1,31 @@
 TODO
 ====
 
+salt-call --local saltutil.sync_all
+salt-call --local state.highstate
+salt-call --local --out=yaml state.show_sls python_pip
+salt '*' state.highstate -l debug
+
+- Do I need all those depends in salt/master-minion, etc?  Cause bootstrap takes care of that
+- when working on cross platform depends, use pyobjects map over jinga
+
 NEXT
 ----
+
+- OK... NEW STEPS. (DO AFTER WE GET SALT / PIP WORKING)
+  1) All same up to initial bootstrap of salt
+  2) Before BS, use custom minion or master conf.  sed the script to include this dir
+     for rootfs for initial run... 
+  3) After bootstrap, salt will set up all dirs, including the bind-dirs
+  4) remove ALL code not required from here
+  5) salt can re-clone this package into /srv/salt-formulas
+  -) -- OR -- should this end up being a rpm/deb where initial files put in place and postinit script?
+     DUNNO about rpm, since this is a one shot install and would never need an update since updates will be
+     via git
+  -) -- OR -- Again, this package, but gets moved to /srv/salt/salt | salt_bootstrap; but will be missing top
+     file, but maybe we can run it directly
+  
+
 - Add pip and salt states to initial bootstrap
 - Use mine to start, then mixin the pillar formula one
 - get halite working; add rootfs to my source directory

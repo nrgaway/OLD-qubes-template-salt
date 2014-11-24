@@ -5,7 +5,6 @@
 #   - generate keys automatically (ONLY ON NEW INSTALLS)
 #   - auto accept minions keys somehow
 #   - maybe keys should be pillars so all minions won't see them
-#
 ##
 
 include:
@@ -23,18 +22,18 @@ salt-master:
       - file: /etc/salt/master
       - file: /etc/salt/master.d/nodegroups.conf
       - file: /etc/salt/master
-      - file: /etc/init.d/salt-master
+      - file: /etc/systemd/system/salt-master.service
       - file: /etc/pki/tls/certs/localhost.crt
       - file: /etc/pki/tls/certs/localhost.key
       - file: /etc/pki/tls/certs/localhost.pem
 
-# salt-master init file
-#/etc/init.d/salt-master:
-#  file.managed:
-#    - source: salt://salt/files/master.init
-#    - user: root
-#    - group: root
-#    - mode: 755
+# salt-master unit file
+/etc/systemd/system/salt-master.service:
+  file.managed:
+    - source: salt://salt/files/salt-master.service
+    - user: root
+    - group: root
+    - mode: 755
 
 # salt-master configuration file
 /etc/salt/master:

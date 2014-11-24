@@ -42,6 +42,8 @@ salt:
     - editable: "git+https://github.com/saltstack/salt.git@v2014.7.0#egg=salt"
     - no_deps: True # We satisfy deps already since we cant build m2crypto on debian/ubuntu
     #- install_options: "--prefix=/usr --force-installation-into-system-dir"
+    #- install_options: "--prefix=/usr"
+    #- install_options: "--force-installation-into-system-dir"
     - upgrade: True
     - require:
       - pkg: salt-dependencies

@@ -6,6 +6,7 @@
 base:
   '*':
     - python_pip
+    - salt
     - salt.minion
     - salt.master
     - salt.gitfs

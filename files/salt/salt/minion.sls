@@ -3,8 +3,8 @@
 #
 ##
 
-include:
-  - salt
+#include:
+#  - salt
 
 salt-minion:
   pip.installed:

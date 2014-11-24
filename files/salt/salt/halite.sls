@@ -14,14 +14,27 @@ $pillars:
   auto: False
 
 $python: |
+    import os
     from salt://salt/map.sls import SaltMap
-
-    # Create some certificates
     from salt.utils.pyobjects import SaltObject
+
     salt = SaltObject(__salt__)
+
+    # /etc/pki/minion/certs/localhost.*
     salt.tls.create_ca('minion')
     salt.tls.create_csr('minion')
-    salt.tls.create_ca_signed_cert('minion', 'localhost')
+    if not os.path.isfile('/etc/pki/minion/certs/localhost.crt'):
+        salt.tls.create_ca_signed_cert('minion', 'localhost')
+
+    # /etc/pki/tls/certs/localhost.*
+    salt.tls.create_self_signed_cert()
+
+    # Create a .pem file for web server
+    filenames = ['/etc/pki/tls/certs/localhost.crt', '/etc/pki/tls/certs/localhost.key']
+    with open('/etc/pki/tls/certs/localhost.pem', 'w') as outfile:
+        for fname in filenames:
+            with open(fname) as infile:
+                outfile.write(infile.read())
 
 # XXX: yamlscript bug; including a file already processed will give dup keys!
 #include:

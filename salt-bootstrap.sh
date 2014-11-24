@@ -50,6 +50,7 @@ if [ "$DEBUG" == "1" ]; then
     rm -rf /etc/systemd/system/salt-*
     rm -rf ./salt-bootstrap
     rm -rf /etc/pki/minion
+    rm -f /etc/pki/tls/certs/localhost.*
     rm -f /tmp/.salt*
 fi
 
@@ -197,7 +198,6 @@ salt-call --local saltutil.sync_all
 systemctl restart salt-master salt-minion || true
 sleep 10
 
-
 echo "=========================================================================================="
 salt "$(hostname)" saltutil.sync_all
 systemctl restart salt-master salt-minion || true
@@ -206,11 +206,11 @@ sleep 10
 echo "=========================================================================================="
 salt "$(hostname)" state.highstate -l debug
 systemctl restart salt-master salt-minion || true
-sleep 10
+#sleep 10
 
-echo "=========================================================================================="
-salt "$(hostname)" state.highstate -l debug
-sleep 20
+#echo "=========================================================================================="
+#salt "$(hostname)" state.highstate -l debug
+#sleep 20
 
-echo "=========================================================================================="
-salt "$(hostname)" state.highstate -l debug
+#echo "=========================================================================================="
+#salt "$(hostname)" state.highstate -l debug

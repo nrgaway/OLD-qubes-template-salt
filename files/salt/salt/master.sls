@@ -7,8 +7,8 @@
 #   - maybe keys should be pillars so all minions won't see them
 ##
 
-include:
-  - salt
+#include:
+#  - salt
 
 salt-master:
   pip.installed:
@@ -23,9 +23,6 @@ salt-master:
       - file: /etc/salt/master.d/nodegroups.conf
       - file: /etc/salt/master
       - file: /etc/systemd/system/salt-master.service
-      - file: /etc/pki/tls/certs/localhost.crt
-      - file: /etc/pki/tls/certs/localhost.key
-      - file: /etc/pki/tls/certs/localhost.pem
 
 # salt-master unit file
 /etc/systemd/system/salt-master.service:
@@ -50,27 +47,3 @@ salt-master:
     - user: root
     - group: root
     - mode: 640
-
-# Localhost tls certificate 
-/etc/pki/tls/certs/localhost.crt:
-  file.managed:
-    - source: salt://salt/files/pki/localhost.crt
-    - user: root
-    - group: root
-    - mode: 600
-
-# Localhost tls key
-/etc/pki/tls/certs/localhost.key:
-  file.managed:
-    - source: salt://salt/files/pki/localhost.key
-    - user: root
-    - group: root
-    - mode: 600
-
-# Localhost tls certificate and key
-/etc/pki/tls/certs/localhost.pem:
-  file.managed:
-    - source: salt://salt/files/pki/localhost.pem
-    - user: root
-    - group: root
-    - mode: 600

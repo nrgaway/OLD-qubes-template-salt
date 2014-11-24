@@ -2,16 +2,16 @@
 # Install gitfs file server
 ##
 
-include:
-  - salt
+#include:
+#  - salt
 
 salt-gitfs:
   pkg.installed:
     - names:
       - python-dulwich
-    - require_in:
-      - service: salt-master
-      - service: salt-minion
+#    - require_in:
+#      - service: salt-master
+#      - service: salt-minion
 
 # gitfs configuration file
 /etc/salt/master.d/gitfs.conf:

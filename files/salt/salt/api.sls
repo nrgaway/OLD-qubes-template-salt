@@ -2,8 +2,8 @@
 # Install salt-api
 ##
 
-include:
-  - salt.master
+#include:
+#  - salt.master
 
 salt-api:
   service.running:

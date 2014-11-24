@@ -1,6 +1,9 @@
 #!/bin/bash -e
 # vim: set ts=4 sw=4 sts=4 et :
 
+# If DEBUG="1" then salt directories will be deleted before installation
+DEBUG=1
+
 INSTALLDIR=/
 
 BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich"
@@ -12,6 +15,16 @@ retval() {
     fi
 }
 
+function systemctl() {
+    action=$1
+    shift
+
+    for unit in $@; do
+        echo "systemctl $action $unit"
+        /usr/bin/systemctl $action $unit || true
+    done
+}
+
 ## Determine OS version
 if [ -f "/etc/os-release" ]; then
     source /etc/os-release
@@ -19,6 +32,25 @@ else
     echo "/etc/os-release file does not exist so can not determine OS type"
     echo "Exiting..."
     exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# Simulate clean installation
+# -----------------------------------------------------------------------------
+if [ "$DEBUG" == "1" ]; then
+    systemctl stop salt-api salt-minion salt-syndic salt-master
+    systemctl disable salt-api salt-minion salt-syndic salt-master
+    rm -rf /etc/salt/*
+    rm -rf /srv/salt/*
+    rm -rf /srv/salt-formulas/*
+    rm -rf /srv/pillar/*
+    rm -rf /var/cache/salt/*
+    rm -rf /root/src/salt
+    rm -rf /lib/systemd/system/salt-*
+    rm -rf /etc/systemd/system/salt-*
+    rm -rf ./salt-bootstrap
+    rm -rf /etc/pki/minion
+    rm -f /tmp/.salt*
 fi
 
 # -----------------------------------------------------------------------------
@@ -119,17 +151,8 @@ install --owner=root --group=root --mode=0755 files/salt/salt/files/bind-directo
 # -----------------------------------------------------------------------------
 # Install modified salt-* unit files
 # -----------------------------------------------------------------------------
-function systemctl() {
-    action=$1
-    shift
-
-    for unit in $@; do
-        /usr/bin/systemctl $action $unit
-    done
-}
-
-systemctl stop salt-api salt-minion salt-syndic salt-master
-systemctl disable salt-api salt-minion salt-syndic salt-master
+systemctl stop salt-api salt-minion salt-syndic salt-master || true
+systemctl disable salt-api salt-minion salt-syndic salt-master || true
 
 install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-master.service /etc/systemd/system
 install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-minion.service /etc/systemd/system
@@ -153,6 +176,7 @@ cp -r files/salt/* /srv/salt || true
 cp -r files/pillar/* /srv/pillar || true
 chmod -R u=rwX,g=rX,o-wrxX /srv/salt
 chmod -R u=rwX,g=rX,o-wrxX /srv/pillar
+sync
 
 ln -sf /var/cache/salt/minion/files/base /srv/formulas
 
@@ -164,6 +188,29 @@ echo "Sleeping for 15 seconds..."
 sleep 15
 
 # Instead of auto-accepting minions; just do it here
-#salt-key -y -A
+salt-key -y -A
+systemctl restart salt-master salt-minion || true
+sleep 10
 
-#salt '*' state.highstate -l debug
+salt-call --local saltutil.sync_all
+#salt-call --local state.highstate -l debug || true
+systemctl restart salt-master salt-minion || true
+sleep 10
+
+
+echo "=========================================================================================="
+salt "$(hostname)" saltutil.sync_all
+systemctl restart salt-master salt-minion || true
+sleep 10
+
+echo "=========================================================================================="
+salt "$(hostname)" state.highstate -l debug
+systemctl restart salt-master salt-minion || true
+sleep 10
+
+echo "=========================================================================================="
+salt "$(hostname)" state.highstate -l debug
+sleep 20
+
+echo "=========================================================================================="
+salt "$(hostname)" state.highstate -l debug

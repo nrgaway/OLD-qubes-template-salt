@@ -16,6 +16,13 @@ $pillars:
 $python: |
     from salt://salt/map.sls import SaltMap
 
+    # Create some certificates
+    from salt.utils.pyobjects import SaltObject
+    salt = SaltObject(__salt__)
+    salt.tls.create_ca('minion')
+    salt.tls.create_csr('minion')
+    salt.tls.create_ca_signed_cert('minion', 'localhost')
+
 # XXX: yamlscript bug; including a file already processed will give dup keys!
 #include:
 #  - salt.master

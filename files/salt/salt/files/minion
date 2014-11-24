@@ -534,3 +534,5 @@ clean_dynamic_modules: True
 ############################################
 # Location of the repository cache file on the master
 #win_repo_cachefile: 'salt://win/repo/winrepo.p'
+
+ca.cert_base_path: '/etc/pki'

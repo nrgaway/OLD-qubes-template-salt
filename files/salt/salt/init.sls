@@ -18,6 +18,7 @@ salt-dependencies:
       - python
       - $SaltMap.python_dev
       - $SaltMap.python_m2crypto
+      - $SaltMap.python_openssl
     - require:
       - pkg: pip-dependencies
       #- python-jinja2    # APT: 2.7.2-2

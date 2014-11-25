@@ -7,9 +7,6 @@
 #   - maybe keys should be pillars so all minions won't see them
 ##
 
-#include:
-#  - salt
-
 salt-master:
   pip.installed:
     - name: salt

@@ -4,6 +4,9 @@
 # Install salt base
 ##
 
+# TODO:
+#   - Need to restart salt servers after updating?
+
 $defaults: False
 $pillars:
   auto: False
@@ -32,18 +35,18 @@ salt-pip-dependencies:
       - msgpack-python    # PIP: 0.3.0
       - jinja2            # 2.7.2
       - psutil            # not-installed 
+      - wheel
     - require:
       - pkg: salt-dependencies
 
 # Install from git
 salt:
   pip.installed:
-    - name: salt 
-    - editable: "git+https://github.com/saltstack/salt.git@v2014.7.0#egg=salt"
+    - name: git+https://github.com/saltstack/salt.git@v2014.7.0#egg=salt
     - no_deps: True # We satisfy deps already since we cant build m2crypto on debian/ubuntu
-    #- install_options: "--prefix=/usr --force-installation-into-system-dir"
-    #- install_options: "--prefix=/usr"
-    #- install_options: "--force-installation-into-system-dir"
+    - install_options: --force-installation-into-system-dir
+    - install_options: --prefix=/usr
+    - use_wheel: true
     - upgrade: True
     - require:
       - pkg: salt-dependencies

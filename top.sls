@@ -13,8 +13,10 @@ base:
     - salt.api
     - salt.syndic_absent
     - salt.halite
+    #
     #- salt.api_absent
     #- salt.master_absent
     #- salt.syndic
-    - vim
-    - vim.salt
+    #
+    #- vim
+    #- vim.salt

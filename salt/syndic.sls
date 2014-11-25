@@ -2,9 +2,6 @@
 # Install salt-syndic and its configuration files
 ##
 
-#include:
-#  - salt
-
 salt-syndic:
   pip.installed:
     - name: salt

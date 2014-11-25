@@ -1,10 +1,6 @@
 ##
 # Install salt-minion and its configuration files
-#
 ##
-
-#include:
-#  - salt
 
 salt-minion:
   pip.installed:

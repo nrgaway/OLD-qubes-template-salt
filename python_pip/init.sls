@@ -22,4 +22,5 @@ $with pip-dependencies:
 
   virtualenvwrapper:
     pip.installed:
-        - pkg: pip-dependencies
+      - wheel
+      - pkg: pip-dependencies

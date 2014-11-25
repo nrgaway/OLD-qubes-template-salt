@@ -2,15 +2,14 @@
 # Install salt-api
 ##
 
-#include:
-#  - salt.master
-
 salt-api:
   service.running:
     - name: salt-api
     - enable: True
     - watch:
       - file: /etc/systemd/system/salt-api.service
+    - require:
+      - pip: salt-master
 
 # salt-api unit file
 /etc/systemd/system/salt-api.service:

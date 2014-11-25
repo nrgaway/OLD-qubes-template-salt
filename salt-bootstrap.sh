@@ -6,7 +6,7 @@ DEBUG=1
 
 INSTALLDIR=/
 
-BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich"
+BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
 retval() {
     local ret_val=$1
@@ -48,7 +48,7 @@ if [ "$DEBUG" == "1" ]; then
     rm -rf /root/src/salt
     rm -rf /lib/systemd/system/salt-*
     rm -rf /etc/systemd/system/salt-*
-    rm -rf ./salt-bootstrap
+    rm -rf /tmp/salt-bootstrap
     rm -rf /etc/pki/minion
     rm -f /etc/pki/tls/certs/localhost.*
     rm -f /tmp/.salt*
@@ -91,8 +91,8 @@ if [ /tmp/.salt.build_deps -a ! -f /tmp/.salt.cloned ]; then
     # XXX: Specify a specific tag so we don't run into regrerssion errors
     # XXX: Need to verify git signatures
 
-    if [ ! -d ./salt-bootstrap ]; then
-        git clone https://github.com/saltstack/salt-bootstrap.git
+    if [ ! -d /tmp/salt-bootstrap ]; then
+        git clone https://github.com/saltstack/salt-bootstrap.git /tmp/salt-bootstrap
     fi
 
     retval $?
@@ -133,9 +133,9 @@ fi
 if [ /tmp/.salt.cloned -a ! -f /tmp/.salt.bootstrap ]; then
     RETVAL=0
 
-    pushd salt-bootstrap
-    ./bootstrap-salt.sh -D -U -X -M git v2014.7.0
-    retval $?
+    pushd /tmp/salt-bootstrap
+        ./bootstrap-salt.sh -D -U -X -M git v2014.7.0
+        retval $?
     popd
 
     if [ $RETVAL == 0 ]; then
@@ -146,7 +146,7 @@ fi
 # -----------------------------------------------------------------------------
 # Bind /rw dirs to salt dirs
 # -----------------------------------------------------------------------------
-install --owner=root --group=root --mode=0755 files/salt/salt/files/bind-directories /rw/usrlocal/bin
+install --owner=root --group=root --mode=0755 salt/files/bind-directories /rw/usrlocal/bin
 /rw/usrlocal/bin/bind-directories /rw/usrlocal/srv/salt:/srv/salt /rw/usrlocal/srv/pillar:/srv/pillar /rw/usrlocal/etc/salt:/etc/salt
 
 # -----------------------------------------------------------------------------
@@ -155,31 +155,32 @@ install --owner=root --group=root --mode=0755 files/salt/salt/files/bind-directo
 systemctl stop salt-api salt-minion salt-syndic salt-master || true
 systemctl disable salt-api salt-minion salt-syndic salt-master || true
 
-install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-master.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-minion.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-syndic.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 files/salt/salt/files/salt-api.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 salt/files/salt-master.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 salt/files/salt-minion.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 salt/files/salt-syndic.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 salt/files/salt-api.service /etc/systemd/system
 
-install --owner=root --group=root --mode=0640 files/salt/salt/files/master /etc/salt
-install --owner=root --group=root --mode=0640 files/salt/salt/files/minion /etc/salt
+install -d --owner=root --group=root --mode=0750 /etc/salt
+install --owner=root --group=root --mode=0640 salt/files/master /etc/salt
+install --owner=root --group=root --mode=0640 salt/files/minion /etc/salt
 install -d --owner=root --group=root --mode=0750 /etc/salt/master.d
 install -d --owner=root --group=root --mode=0750 /etc/salt/minion.d
-install --owner=root --group=root --mode=0640 files/salt/salt/files/master.d/* /etc/salt/master.d || true
-install --owner=root --group=root --mode=0640 files/salt/salt/files/minion.d/* /etc/salt/minion.d || true
+install --owner=root --group=root --mode=0640 salt/files/master.d/* /etc/salt/master.d || true
+install --owner=root --group=root --mode=0640 salt/files/minion.d/* /etc/salt/minion.d || true
 
-install -d --owner=root --group=root --mode=0750 /srv/salt
-install -d --owner=root --group=root --mode=0750 /srv/pillar
+#install -d --owner=root --group=root --mode=0750 /srv/salt
+#install -d --owner=root --group=root --mode=0750 /srv/pillar
 install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
 
-#install --owner=root --group=root --mode=0640 files/salt/* /srv/salt || true
-#install --owner=root --group=root --mode=0640 files/pillar/* /srv/pillar || true
-cp -r files/salt/* /srv/salt || true
-cp -r files/pillar/* /srv/pillar || true
+install --owner=root --group=root --mode=0640 top.sls /srv/salt/top.sls
+
+cp -r salt /srv/salt/salt || true
+cp -r python_pip /srv/salt/python_pip || true
+cp -r pillar /srv/pillar || true
 chmod -R u=rwX,g=rX,o-wrxX /srv/salt
 chmod -R u=rwX,g=rX,o-wrxX /srv/pillar
 sync
 
-ln -sf /var/cache/salt/minion/files/base /srv/formulas
 
 systemctl enable salt-master salt-minion salt-api
 systemctl start salt-master salt-minion salt-api
@@ -194,18 +195,18 @@ systemctl restart salt-master salt-minion || true
 sleep 10
 
 salt-call --local saltutil.sync_all
-#salt-call --local state.highstate -l debug || true
+salt-call --local state.highstate -l debug || true
 systemctl restart salt-master salt-minion || true
-sleep 10
+#sleep 10
 
-echo "=========================================================================================="
-salt "$(hostname)" saltutil.sync_all
-systemctl restart salt-master salt-minion || true
-sleep 10
+#echo "=========================================================================================="
+#salt "$(hostname)" saltutil.sync_all
+#systemctl restart salt-master salt-minion || true
+#sleep 10
 
-echo "=========================================================================================="
-salt "$(hostname)" state.highstate -l debug
-systemctl restart salt-master salt-minion || true
+#echo "=========================================================================================="
+#salt "$(hostname)" state.highstate -l debug
+#systemctl restart salt-master salt-minion || true
 #sleep 10
 
 #echo "=========================================================================================="

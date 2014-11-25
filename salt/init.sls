@@ -46,8 +46,8 @@ salt:
     - no_deps: True # We satisfy deps already since we cant build m2crypto on debian/ubuntu
     - install_options: --force-installation-into-system-dir
     - install_options: --prefix=/usr
-    - use_wheel: true
-    - upgrade: True
+    - use_wheel: True
+    - upgrade: False
     - require:
       - pkg: salt-dependencies
       - pip: salt-pip-dependencies

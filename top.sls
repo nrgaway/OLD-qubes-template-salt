@@ -18,5 +18,6 @@ base:
     #- salt.master_absent
     #- salt.syndic
     #
-    #- vim
-    #- vim.salt
+    - vim
+    - vim.salt
+    - users

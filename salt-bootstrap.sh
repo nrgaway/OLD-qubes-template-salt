@@ -40,11 +40,13 @@ fi
 if [ "$DEBUG" == "1" ]; then
     systemctl stop salt-api salt-minion salt-syndic salt-master
     systemctl disable salt-api salt-minion salt-syndic salt-master
+    rm -rf /rw/usrlocal/srv/*
+    rm -rf /rw/usrlocal/etc/salt/*
     rm -rf /etc/salt/*
     rm -rf /srv/salt/*
     rm -rf /srv/salt-formulas/*
     rm -rf /srv/pillar/*
-    rm -rf /var/cache/salt/*
+    rm -rf /var/cache/salt
     rm -rf /root/src/salt
     rm -rf /lib/systemd/system/salt-*
     rm -rf /etc/systemd/system/salt-*
@@ -168,19 +170,19 @@ install -d --owner=root --group=root --mode=0750 /etc/salt/minion.d
 install --owner=root --group=root --mode=0640 salt/files/master.d/* /etc/salt/master.d || true
 install --owner=root --group=root --mode=0640 salt/files/minion.d/* /etc/salt/minion.d || true
 
-#install -d --owner=root --group=root --mode=0750 /srv/salt
-#install -d --owner=root --group=root --mode=0750 /srv/pillar
+install -d --owner=root --group=root --mode=0750 /srv/salt
+install -d --owner=root --group=root --mode=0750 /srv/pillar
 install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
 
 install --owner=root --group=root --mode=0640 top.sls /srv/salt/top.sls
 
+cp -r pillar/* /srv/pillar || true
 cp -r salt /srv/salt/salt || true
 cp -r python_pip /srv/salt/python_pip || true
-cp -r pillar /srv/pillar || true
+
 chmod -R u=rwX,g=rX,o-wrxX /srv/salt
 chmod -R u=rwX,g=rX,o-wrxX /srv/pillar
 sync
-
 
 systemctl enable salt-master salt-minion salt-api
 systemctl start salt-master salt-minion salt-api
@@ -196,22 +198,7 @@ sleep 10
 
 salt-call --local saltutil.sync_all
 salt-call --local state.highstate -l debug || true
+
+echo "Sleeping for 5 seconds..."
+sync
 systemctl restart salt-master salt-minion || true
-#sleep 10
-
-#echo "=========================================================================================="
-#salt "$(hostname)" saltutil.sync_all
-#systemctl restart salt-master salt-minion || true
-#sleep 10
-
-#echo "=========================================================================================="
-#salt "$(hostname)" state.highstate -l debug
-#systemctl restart salt-master salt-minion || true
-#sleep 10
-
-#echo "=========================================================================================="
-#salt "$(hostname)" state.highstate -l debug
-#sleep 20
-
-#echo "=========================================================================================="
-#salt "$(hostname)" state.highstate -l debug

@@ -40,8 +40,8 @@ salt-halite:
   pip.installed:
     - name: "git+https://github.com/saltstack/halite.git#egg=halite"
     - no_deps: True # We satisfy deps already 
-    - use_wheel: true
-    - upgrade: True
+    - use_wheel: True
+    - upgrade: False
     - require:
       - pip: salt-master
       - pip: salt-halite-pip-dependencies

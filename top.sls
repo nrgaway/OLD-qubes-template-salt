@@ -19,5 +19,4 @@ base:
     #- salt.syndic
     #
     - vim
-    - vim.salt
     - users

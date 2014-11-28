@@ -179,6 +179,7 @@ install --owner=root --group=root --mode=0640 top.sls /srv/salt/top.sls
 cp -r pillar/* /srv/pillar || true
 cp -r salt /srv/salt/salt || true
 cp -r python_pip /srv/salt/python_pip || true
+cp -r vim /srv/salt/vim || true
 
 chmod -R u=rwX,g=rX,o-wrxX /srv/salt
 chmod -R u=rwX,g=rX,o-wrxX /srv/pillar

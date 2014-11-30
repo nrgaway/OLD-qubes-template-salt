@@ -3,9 +3,8 @@
 ##
 
 salt-api:
-  service.running:
+  service.enabled:
     - name: salt-api
-    - enable: True
     - watch:
       - file: /etc/systemd/system/salt-api.service
     - require:

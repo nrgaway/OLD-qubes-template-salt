@@ -20,3 +20,6 @@ base:
     #
     - vim
     - users
+    - theme
+    - theme.fonts_ubuntu
+    - theme.fonts_source_code_pro

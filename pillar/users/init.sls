@@ -69,4 +69,3 @@ users:
       system: True
     groups:
       - sudo
-      - shadow

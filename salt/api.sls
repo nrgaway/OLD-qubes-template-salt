@@ -5,8 +5,6 @@
 salt-api:
   service.enabled:
     - name: salt-api
-    - watch:
-      - file: /etc/systemd/system/salt-api.service
     - require:
       - pip: salt-master
 

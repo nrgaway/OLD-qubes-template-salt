@@ -2,6 +2,7 @@
 # vim: set ts=4 sw=4 sts=4 et :
 
 # If DEBUG="1" then salt directories will be deleted before installation
+# and development env will be set up
 DEBUG=1
 
 INSTALLDIR=/
@@ -181,6 +182,13 @@ cp -r salt /srv/salt/salt || true
 cp -r python_pip /srv/salt/python_pip || true
 cp -r vim /srv/salt/vim || true
 cp -r theme /srv/salt/theme || true
+
+# Replace master config files with development files
+if [ "$DEBUG" == "1" ]; then
+    pushd dev
+        ./dev-mode.sh
+    popd
+fi
 
 chmod -R u=rwX,g=rX,o-wrxX /srv/salt
 chmod -R u=rwX,g=rX,o-wrxX /srv/pillar

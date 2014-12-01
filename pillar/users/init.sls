@@ -53,6 +53,10 @@
 #         uid: 400
 #
 
+groups:
+  shadow:
+    system: True
+
 users:
   admin:
     uid: 98
@@ -69,3 +73,4 @@ users:
       system: True
     groups:
       - sudo
+      - shadow

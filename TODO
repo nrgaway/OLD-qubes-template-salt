@@ -92,3 +92,27 @@ QUBES-RPC
 NOTES
 -----
 - autoaccept is on (localhost only); turn off after initial update
+
+THEMES
+------
+/usr/share/themes
+~/.themes
+gtk 3.x themes for windowing
+
+GTK Theme
+gsettings set org.gnome.desktop.interface gtk-theme "Orchis"
+gsettings set org.gnome.desktop.wm.preferences theme "Orchis"
+
+May also need:
+gnome-shell-extension-user-theme
+
+gtk-unico-engine - Fedora
+gtk3-engines-unico - Debian
+
+clearlooks-phenix-gtk3-theme
+bluebird-gtk3-theme
+albatross-gtk3-theme
+oxygen-gtk3
+
+.config/fontsconfig/conf.d/hack.conf seems to be a fedora workaround
+https://bugzilla.redhat.com/show_bug.cgi?id=1035486

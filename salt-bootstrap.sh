@@ -5,7 +5,9 @@
 # and development env will be set up
 DEBUG=1
 
-INSTALLDIR=/
+# If COPY_REPO="1" then this whole repo will be copied to /srv/salt so the 
+# included state files can be updated via git
+COPY_REPO=1
 
 BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
@@ -64,13 +66,17 @@ if ! [ -f /tmp/.salt.build_deps ]; then
     RETVAL=0
     if [ "$ID" == "debian" -o "$ID" == "ubuntu" ]; then
         DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-            chroot "${INSTALLDIR}" apt-get update
+        apt-get --purge -y --force-yes remove salt
+
+        DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+            apt-get update
         retval $?
 
         DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-            chroot "${INSTALLDIR}" apt-get -y --force-yes install ${BUILD_DEPS}
+            apt-get -y --force-yes install ${BUILD_DEPS}
         retval $?
     elif [ "$ID" == "fedora" ]; then
+        yum erase -y salt
         yum install -y ${BUILD_DEPS}
         retval $?
     else
@@ -149,8 +155,10 @@ fi
 # -----------------------------------------------------------------------------
 # Bind /rw dirs to salt dirs
 # -----------------------------------------------------------------------------
-install --owner=root --group=root --mode=0755 salt/files/bind-directories /rw/usrlocal/bin
-/rw/usrlocal/bin/bind-directories /rw/usrlocal/srv/salt:/srv/salt /rw/usrlocal/srv/pillar:/srv/pillar /rw/usrlocal/etc/salt:/etc/salt
+salt/files/bind-directories /rw/usrlocal/srv/salt:/srv/salt \
+                            /rw/usrlocal/srv/pillar:/srv/pillar \
+                            /rw/usrlocal/etc/salt:/etc/salt \
+                            /rw/usrlocal/var/lib/salt:/var/lib/salt
 
 # -----------------------------------------------------------------------------
 # Install modified salt-* unit files
@@ -175,13 +183,16 @@ install -d --owner=root --group=root --mode=0750 /srv/salt
 install -d --owner=root --group=root --mode=0750 /srv/pillar
 install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
 
-install --owner=root --group=root --mode=0640 top.sls /srv/salt/top.sls
-
+if [ "$COPY_REPO" == "1" ]; then
+    cp -r . /srv/salt
+else
+    install --owner=root --group=root --mode=0640 top.sls /srv/salt/top.sls
+    cp -r salt /srv/salt/salt || true
+    cp -r python_pip /srv/salt/python_pip || true
+    cp -r vim /srv/salt/vim || true
+    cp -r theme /srv/salt/theme || true
+fi
 cp -r pillar/* /srv/pillar || true
-cp -r salt /srv/salt/salt || true
-cp -r python_pip /srv/salt/python_pip || true
-cp -r vim /srv/salt/vim || true
-cp -r theme /srv/salt/theme || true
 
 # Replace master config files with development files
 if [ "$DEBUG" == "1" ]; then
@@ -210,5 +221,6 @@ salt-call --local saltutil.sync_all
 salt-call --local state.highstate -l debug || true
 
 echo "Sleeping for 5 seconds..."
+sleep 5
 sync
 systemctl restart salt-master salt-minion || true

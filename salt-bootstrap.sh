@@ -1,6 +1,13 @@
 #!/bin/bash -e
 # vim: set ts=4 sw=4 sts=4 et :
 
+path="$(readlink -m $0)"
+dir="${path%/*}"
+
+source "${dir}/.salt-functions"
+source "${dir}/.salt-purge"
+source "${dir}/.salt-activate"
+
 # If DEBUG="1" then salt directories will be deleted before installation
 # and development env will be set up
 DEBUG=1
@@ -11,52 +18,11 @@ COPY_REPO=1
 
 BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
-retval() {
-    local ret_val=$1
-    if ! [ $ret_val == 0 ]; then
-        $RETVAL=1
-    fi
-}
-
-function systemctl() {
-    action=$1
-    shift
-
-    for unit in $@; do
-        echo "systemctl $action $unit"
-        /usr/bin/systemctl $action $unit || true
-    done
-}
-
-## Determine OS version
-if [ -f "/etc/os-release" ]; then
-    source /etc/os-release
-else
-    echo "/etc/os-release file does not exist so can not determine OS type"
-    echo "Exiting..."
-    exit 1
-fi
-
 # -----------------------------------------------------------------------------
 # Simulate clean installation
 # -----------------------------------------------------------------------------
 if [ "$DEBUG" == "1" ]; then
-    systemctl stop salt-api salt-minion salt-syndic salt-master
-    systemctl disable salt-api salt-minion salt-syndic salt-master
-    rm -rf /rw/usrlocal/srv/*
-    rm -rf /rw/usrlocal/etc/salt/*
-    rm -rf /etc/salt/*
-    rm -rf /srv/salt/*
-    rm -rf /srv/salt-formulas/*
-    rm -rf /srv/pillar/*
-    rm -rf /var/cache/salt
-    rm -rf /root/src/salt
-    rm -rf /lib/systemd/system/salt-*
-    rm -rf /etc/systemd/system/salt-*
-    rm -rf /tmp/salt-bootstrap
-    rm -rf /etc/pki/minion
-    rm -f /etc/pki/tls/certs/localhost.*
-    rm -f /tmp/.salt*
+    saltPurge
 fi
 
 # -----------------------------------------------------------------------------
@@ -66,7 +32,7 @@ if ! [ -f /tmp/.salt.build_deps ]; then
     RETVAL=0
     if [ "$ID" == "debian" -o "$ID" == "ubuntu" ]; then
         DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-        apt-get --purge -y --force-yes remove salt
+        apt-get --purge -y --force-yes remove salt-minion salt-master salt-syndic
 
         DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
             apt-get update
@@ -155,10 +121,11 @@ fi
 # -----------------------------------------------------------------------------
 # Bind /rw dirs to salt dirs
 # -----------------------------------------------------------------------------
-salt/files/bind-directories /rw/usrlocal/srv/salt:/srv/salt \
-                            /rw/usrlocal/srv/pillar:/srv/pillar \
-                            /rw/usrlocal/etc/salt:/etc/salt \
-                            /rw/usrlocal/var/cache/salt:/var/cache/salt
+"${dir}/salt/files/bind-directories" \
+    /rw/usrlocal/srv/salt:/srv/salt \
+    /rw/usrlocal/srv/pillar:/srv/pillar \
+    /rw/usrlocal/etc/salt:/etc/salt \
+    /rw/usrlocal/var/cache/salt:/var/cache/salt
 
 # -----------------------------------------------------------------------------
 # Install modified salt-* unit files
@@ -166,37 +133,37 @@ salt/files/bind-directories /rw/usrlocal/srv/salt:/srv/salt \
 systemctl stop salt-api salt-minion salt-syndic salt-master || true
 systemctl disable salt-api salt-minion salt-syndic salt-master || true
 
-install --owner=root --group=root --mode=0644 salt/files/salt-master.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 salt/files/salt-minion.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 salt/files/salt-syndic.service /etc/systemd/system
-install --owner=root --group=root --mode=0644 salt/files/salt-api.service /etc/systemd/system
+install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-master.service" /etc/systemd/system
+install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-minion.service" /etc/systemd/system
+install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-syndic.service" /etc/systemd/system
+install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-api.service" /etc/systemd/system
 
 install -d --owner=root --group=root --mode=0750 /etc/salt
-install --owner=root --group=root --mode=0640 salt/files/master /etc/salt
-install --owner=root --group=root --mode=0640 salt/files/minion /etc/salt
+install --owner=root --group=root --mode=0640 "${dir}/salt/files/master" /etc/salt
+install --owner=root --group=root --mode=0640 "${dir}/salt/files/minion" /etc/salt
 install -d --owner=root --group=root --mode=0750 /etc/salt/master.d
 install -d --owner=root --group=root --mode=0750 /etc/salt/minion.d
-install --owner=root --group=root --mode=0640 salt/files/master.d/* /etc/salt/master.d || true
-install --owner=root --group=root --mode=0640 salt/files/minion.d/* /etc/salt/minion.d || true
+install --owner=root --group=root --mode=0640 "${dir}/salt/files/master.d/"* /etc/salt/master.d || true
+install --owner=root --group=root --mode=0640 "${dir}/salt/files/minion.d/"* /etc/salt/minion.d || true
 
 install -d --owner=root --group=root --mode=0750 /srv/salt
 install -d --owner=root --group=root --mode=0750 /srv/pillar
 install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
 
 if [ "$COPY_REPO" == "1" ]; then
-    cp -r . /srv/salt
+    cp -r "${dir}/". /srv/salt
 else
-    install --owner=root --group=root --mode=0640 top.sls /srv/salt/top.sls
-    cp -r salt /srv/salt/salt || true
-    cp -r python_pip /srv/salt/python_pip || true
-    cp -r vim /srv/salt/vim || true
-    cp -r theme /srv/salt/theme || true
+    install --owner=root --group=root --mode=0640 "${dir}/top.sls" /srv/salt/top.sls
+    cp -r "${dir}/salt" /srv/salt/salt || true
+    cp -r "${dir}/python_pip" /srv/salt/python_pip || true
+    cp -r "${dir}/vim" /srv/salt/vim || true
+    cp -r "${dir}/theme" /srv/salt/theme || true
 fi
-cp -r pillar/* /srv/pillar || true
+cp -r "${dir}/pillar/"* /srv/pillar || true
 
 # Replace master config files with development files
 if [ "$DEBUG" == "1" ]; then
-    pushd dev
+    pushd "${dir}/dev"
         ./dev-mode.sh
     popd
 fi
@@ -213,8 +180,8 @@ echo "Sleeping for 15 seconds..."
 sleep 15
 
 # Instead of auto-accepting minions; just do it here
-salt-key -y -A
-systemctl restart salt-master salt-minion || true
+saltActivate
+echo "Sleeping for 10 seconds..."
 sleep 10
 
 salt-call --local saltutil.sync_all

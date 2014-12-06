@@ -1,0 +1,53 @@
+#!/bin/bash -e
+# vim: set ts=4 sw=4 sts=4 et :
+
+path="$(readlink -m $0)"
+dir="${path%/*}"
+
+source "${dir}/.salt-functions"
+
+# -----------------------------------------------------------------------------
+# Purge all salt related files
+# -----------------------------------------------------------------------------
+saltPurge() {
+    systemctl stop salt-api salt-minion salt-syndic salt-master
+    systemctl disable salt-api salt-minion salt-syndic salt-master
+
+    "${dir}/salt/files/bind-directories" --umount \
+        /rw/usrlocal/srv/salt:/srv/salt \
+        /rw/usrlocal/srv/pillar:/srv/pillar \
+        /rw/usrlocal/etc/salt:/etc/salt \
+        /rw/usrlocal/var/cache/salt:/var/cache/salt
+    sync
+
+    # rw mount salt related files
+    rm -rf /rw/usrlocal/etc/salt/*
+    rm -rf /rw/usrlocal/srv/*
+    rm -rf /rw/usrlocal/var/cache/salt/*
+
+    # root filesystem salt related files
+    rm -rf /etc/salt/*
+    rm -rf /srv/salt/*
+    rm -rf /srv/salt-formulas/*
+    rm -rf /srv/pillar/*
+    rm -rf /var/cache/salt
+    rm -rf /usr/lib/salt
+
+    # Systemd unit files
+    rm -rf /lib/systemd/system/salt-*
+    rm -rf /etc/systemd/system/salt-*
+
+    # Temp files
+    rm -rf /root/src/salt
+    rm -rf /tmp/salt-bootstrap
+
+    # Files created by salt
+    rm -rf /etc/pki/minion
+    rm -f /etc/pki/tls/certs/localhost.*
+    rm -f /tmp/.salt*
+}
+
+# Run saltPurge if called directly
+if [ "${path##*/}" == ".salt-purge" ]; then
+    saltPurge
+fi

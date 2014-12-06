@@ -169,7 +169,7 @@ fi
 cp -r "${dir}/pillar/"* /srv/pillar || true
 
 # Replace master config files with development files
-if [ "$DEBUG" == "1" ]; then
+if [ "$DEBUG" == "1" ] && [ -d "${dir}/dev" ]; then
     pushd "${dir}/dev"
         ./dev-mode.sh
     popd

@@ -42,7 +42,8 @@ for bind in $@; do
     # Make sure ro directory is not mounted
     umount "${ro_dir}" 2> /dev/null || true
 
-    if [ "${UMOUNT}" == "1" ]; then
+    # Exit now if --umount option passed or VM is a TemplateVM
+    if [ "${UMOUNT}" == "1" ] || [ -f "/var/run/qubes-service/updates-proxy-setup" ]; then
         echo "Umounting only..."
         exit 0
     fi

@@ -8,9 +8,13 @@ source "${dir}/.salt-functions"
 source "${dir}/.salt-purge"
 source "${dir}/.salt-activate"
 
-# If DEBUG="1" then salt directories will be deleted before installation
-# and development env will be set up
-DEBUG=1
+# If a file named '.debug' exists in the same directory as 'salt-bootstrap.sh' 
+# then salt directories will be deleted before installation and development 
+# env will be set up
+if [ -f "${dir}/.debug" ]; then
+    echo "DEBUG MODE IS ENABLED!"
+    DEBUG=1
+fi
 
 # If COPY_REPO="1" then this whole repo will be copied to /srv/salt so the 
 # included state files can be updated via git

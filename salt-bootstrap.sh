@@ -158,7 +158,7 @@ fi
 salt/files/bind-directories /rw/usrlocal/srv/salt:/srv/salt \
                             /rw/usrlocal/srv/pillar:/srv/pillar \
                             /rw/usrlocal/etc/salt:/etc/salt \
-                            /rw/usrlocal/var/lib/salt:/var/lib/salt
+                            /rw/usrlocal/var/cache/salt:/var/cache/salt
 
 # -----------------------------------------------------------------------------
 # Install modified salt-* unit files

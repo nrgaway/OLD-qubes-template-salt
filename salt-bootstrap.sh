@@ -8,6 +8,13 @@ source "${dir}/.salt-functions"
 source "${dir}/.salt-purge"
 source "${dir}/.salt-activate"
 
+# Auto authorize installed salt-minion if AUTHORIZE = "1"
+AUTHORIZE=1
+
+# If COPY_REPO="1" then this whole repo will be copied to /srv/salt so the 
+# included state files can be updated via git
+COPY_REPO=1
+
 # If a file named '.debug' exists in the same directory as 'salt-bootstrap.sh' 
 # then salt directories will be deleted before installation and development 
 # env will be set up
@@ -15,10 +22,6 @@ if [ -f "${dir}/.debug" ]; then
     echo "DEBUG MODE IS ENABLED!"
     DEBUG=1
 fi
-
-# If COPY_REPO="1" then this whole repo will be copied to /srv/salt so the 
-# included state files can be updated via git
-COPY_REPO=1
 
 BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
@@ -179,14 +182,12 @@ sync
 systemctl enable salt-master salt-minion salt-api
 systemctl start salt-master salt-minion salt-api
 
-# Give time for minion to be authorized
-echo "Sleeping for 15 seconds..."
-sleep 15
-
-# Instead of auto-accepting minions; just do it here
-saltActivate
-echo "Sleeping for 10 seconds..."
-sleep 10
+if [ "$AUTHORIZE" == "1" ]; then
+    # Give time for minion to be authorized
+    echo "Sleeping for 30 seconds..."
+    sleep 30
+    saltActivate
+fi
 
 salt-call --local saltutil.sync_all
 salt-call --local state.highstate -l debug || true
@@ -207,3 +208,10 @@ systemctl enable salt-minion || true
 
 systemctl start salt-master || true
 systemctl start salt-minion || true
+
+# Just incase we have not yet authorized...
+if [ "$AUTHORIZE" == "1" ]; then
+    echo "Sleeping for 15 seconds..."
+    sleep 15
+    saltActivate
+fi

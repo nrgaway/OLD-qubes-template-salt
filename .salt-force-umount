@@ -1,4 +1,5 @@
 #!/bin/bash -e
+# vim: set ts=4 sw=4 sts=4 et :
 
 #
 # Written by Jason Mehring (nrgaway@gmail.com) 
@@ -53,10 +54,11 @@ umount_kill() {
         elif ! [ "$2" ]; then
             # Look for (deleted) mountpoints
             echo "not a regular mount point: $dir"
-            base=$(basename "$dir") 
-            dir=$(dirname "$dir") 
-            base=$(echo "$base" | sed 's/[\].*$//')
-            dir="$dir/$base"
+
+            # Make sure it's not a deleted directory within mount
+            # like: /etc/salt\040(deleted)
+            dir="${dir%\\*}"
+
             sudo umount -v -f -n "$dir" 2> /dev/null || \
                 sudo umount -v -f -n -l "$dir" 2> /dev/null || \
                 echo "umount $dir unsuccessful!"

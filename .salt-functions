@@ -37,3 +37,14 @@ else
     exit 1
 fi
 
+function timer() {
+    time=${1}
+
+    echo "Sleeping for ${1} seconds"
+    while [ ${time} -gt 0 ]; do
+        printf " ${time}"
+        sleep 1
+        time=$[$time-1]
+    done
+    echo
+}

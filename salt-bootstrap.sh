@@ -184,16 +184,14 @@ systemctl start salt-master salt-minion salt-api
 
 if [ "$AUTHORIZE" == "1" ]; then
     # Give time for minion to be authorized
-    echo "Sleeping for 30 seconds..."
-    sleep 30
+    echo "Trying to authorize minion..."
+    timer 30
     saltActivate
 fi
 
 salt-call --local saltutil.sync_all
 salt-call --local state.highstate -l debug || true
-
-echo "Sleeping for 5 seconds..."
-sleep 5
+timer 5
 sync
 
 # Salt was replaced, so safely restart it
@@ -211,7 +209,7 @@ systemctl start salt-minion || true
 
 # Just incase we have not yet authorized...
 if [ "$AUTHORIZE" == "1" ]; then
-    echo "Sleeping for 15 seconds..."
-    sleep 15
+    echo "Trying to authorize minion..."
+    timer 30
     saltActivate
 fi

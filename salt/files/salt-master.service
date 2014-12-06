@@ -4,7 +4,12 @@ After=syslog.target network.target
 
 [Service]
 Type=notify
-ExecStartPre=/rw/usrlocal/bin/bind-directories /rw/usrlocal/srv/salt:/srv/salt /rw/usrlocal/srv/pillar:/srv/pillar /rw/usrlocal/etc/salt:/etc/salt
+ExecStartPre=/usr/lib/salt/bind-directories \
+             /rw/usrlocal/srv/salt:/srv/salt \
+             /rw/usrlocal/srv/pillar:/srv/pillar \
+             /rw/usrlocal/etc/salt:/etc/salt \
+             /rw/usrlocal/var/lib/salt:/var/lib/salt
+
 ExecStart=/usr/bin/salt-master
 
 [Install]

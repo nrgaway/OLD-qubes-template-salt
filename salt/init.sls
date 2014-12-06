@@ -23,7 +23,7 @@ salt-dependencies:
       - $SaltMap.python_m2crypto
       - $SaltMap.python_openssl
     - require:
-      - pkg: pip-dependencies
+      - pkg: pip-dependencies 
       #- python-jinja2    # APT: 2.7.2-2
 
 salt-pip-dependencies:
@@ -53,3 +53,11 @@ salt:
       - pip: salt-pip-dependencies
       - pkg: git
 
+# binddirs script
+/usr/lib/salt/bind-directories:
+  file.managed:
+    - source: salt://salt/files/bind-directories
+    - makedirs: True
+    - user: root
+    - group: root
+    - mode: 755

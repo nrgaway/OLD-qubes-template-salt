@@ -223,4 +223,16 @@ salt-call --local state.highstate -l debug || true
 echo "Sleeping for 5 seconds..."
 sleep 5
 sync
-systemctl restart salt-master salt-minion || true
+
+# Salt was replaced, so safely restart it
+systemctl stop salt-minion || true
+systemctl stop salt-master || true
+
+systemctl disable salt-master || true
+systemctl disable salt-minion || true
+
+systemctl enable salt-master || true
+systemctl enable salt-minion || true
+
+systemctl start salt-master || true
+systemctl start salt-minion || true

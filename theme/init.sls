@@ -2,6 +2,8 @@
 
 ##
 # theme
+#
+# use 'xrdb -query' to check rendering results
 ##
 
 $defaults: False
@@ -58,3 +60,12 @@ $with theme-dependencies:
       - group: root
       - mode: 644
 
+  # Fix for blurry fonts in Fedora 20
+  $if grains('os') == 'Fedora' and grains('osmajorrelease') == '20':
+    /etc/xdg/fedora-font-fix.conf:
+      file.managed:
+        - source: salt://theme/files/fedora-font-fix.conf
+        - makedirs: True
+        - user: root
+        - group: root
+        - mode: 644

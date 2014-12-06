@@ -5,6 +5,7 @@ path="$(readlink -m $0)"
 dir="${path%/*}"
 
 source "${dir}/.salt-functions"
+source "${dir}/.salt-force-umount"
 
 # -----------------------------------------------------------------------------
 # Purge all salt related files
@@ -20,18 +21,26 @@ saltPurge() {
         /rw/usrlocal/var/cache/salt:/var/cache/salt
     sync
 
+    # Make sure everything is really umounted!
+    umount_kill "/srv/salt" || true
+    umount_kill "/srv/pillar" || true
+    umount_kill "/etc/salt" || true
+    umount_kill "/var/cache/salt" || true
+
     # rw mount salt related files
-    rm -rf /rw/usrlocal/etc/salt/*
-    rm -rf /rw/usrlocal/srv/*
-    rm -rf /rw/usrlocal/var/cache/salt/*
+    rm -rf /rw/usrlocal/etc/salt || true
+    rm -rf /rw/usrlocal/srv/salt || true
+    rm -rf /rw/usrlocal/srv/salt-formulas || true
+    rm -rf /rw/usrlocal/srv/pillar || true
+    rm -rf /rw/usrlocal/var/cache/salt || true
 
     # root filesystem salt related files
-    rm -rf /etc/salt/*
-    rm -rf /srv/salt/*
-    rm -rf /srv/salt-formulas/*
-    rm -rf /srv/pillar/*
-    rm -rf /var/cache/salt
-    rm -rf /usr/lib/salt
+    rm -rf /etc/salt || true
+    rm -rf /srv/salt || true
+    rm -rf /srv/salt-formulas || true
+    rm -rf /srv/pillar || true
+    rm -rf /var/cache/salt || true
+    rm -rf /usr/lib/salt || true
 
     # Systemd unit files
     rm -rf /lib/systemd/system/salt-*

@@ -182,19 +182,18 @@ sync
 systemctl enable salt-master salt-minion salt-api
 systemctl start salt-master salt-minion salt-api
 
-if [ "$AUTHORIZE" == "1" ]; then
-    # Give time for minion to be authorized
-    echo "Trying to authorize minion..."
-    timer 30
-    saltActivate
-fi
-
 salt-call --local saltutil.sync_all
 salt-call --local state.highstate -l debug || true
 timer 5
 sync
 
 # Salt was replaced, so safely restart it
+echo
+echo "Since salt was replaced all master and minion will be stopped,"
+echo "disabled, re-enabled and then restarted"
+echo
+echo "NOTE: It can take salt-server a long time to stop (1 to 2 minutes)"
+echo "without any indication of its progree.  Be patient :)"
 systemctl stop salt-minion || true
 systemctl stop salt-master || true
 

@@ -189,11 +189,12 @@ sync
 
 # Salt was replaced, so safely restart it
 echo
-echo "Since salt was replaced all master and minion will be stopped,"
-echo "disabled, re-enabled and then restarted"
+echo "Since salt was replaced, salt-master and salt-minion will be stopped,"
+echo "disabled, re-enabled and then restarted."
 echo
-echo "NOTE: It can take salt-server a long time to stop (1 to 2 minutes)"
-echo "without any indication of its progree.  Be patient :)"
+echo "NOTE: It can take salt-master a long time to stop (1 to 2 minutes)"
+echo "without any indication of its progress.  Be patient :)"
+echo
 systemctl stop salt-minion || true
 systemctl stop salt-master || true
 

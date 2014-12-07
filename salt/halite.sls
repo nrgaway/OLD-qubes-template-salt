@@ -50,7 +50,7 @@ salt-halite:
 # halite configuration file
 /etc/salt/master.d/halite.conf:
   file.managed:
-    - source: salt://salt/files/master.d/halite.conf
+    - source: salt://salt/files/halite.conf
     - user: root
     - group: root
     - mode: 640

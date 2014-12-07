@@ -26,9 +26,9 @@ fi
 BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
 # -----------------------------------------------------------------------------
-# Simulate clean installation
+# Simulate clean installation (purge all salt related files)
 # -----------------------------------------------------------------------------
-if [ "$DEBUG" == "1" ]; then
+if [ "$DEBUG" == "1" ] || [ -f "${dir}/.purge" ]; then
     saltPurge
 fi
 
@@ -160,6 +160,10 @@ install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
 
 if [ "$COPY_REPO" == "1" ]; then
     cp -r "${dir}/". /srv/salt
+
+    # Don't allow .debug or .purge files to copy over
+    rm -f /srv/salt/.debug
+    rm -f /srv/salt/.purge
 else
     install --owner=root --group=root --mode=0640 "${dir}/top.sls" /srv/salt/top.sls
     cp -r "${dir}/salt" /srv/salt/salt || true

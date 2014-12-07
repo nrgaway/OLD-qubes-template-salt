@@ -14,6 +14,9 @@ function bindDirectories() {
         /rw/usrlocal/srv/pillar:/srv/pillar \
         /rw/usrlocal/etc/salt:/etc/salt \
         /rw/usrlocal/var/cache/salt:/var/cache/salt
+
+    systemctl enable salt-master salt-minion salt-api
+    systemctl stop salt-master salt-minion salt-api
 }
 
 # un-bind / umount all salt related directories that were bound

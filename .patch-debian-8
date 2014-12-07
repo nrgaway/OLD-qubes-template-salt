@@ -1,6 +1,11 @@
 #!/bin/bash -e
 # vim: set ts=4 sw=4 sts=4 et :
 
+path="$(readlink -m $0)"
+dir="${path%/*}"
+
+source "${dir}/.salt-functions"
+
 run_level=$(runlevel | awk '{ print $2 }')
 
 # Fake that services are enabled
@@ -11,7 +16,14 @@ function patchBootstrapPre() {
 }
 
 function patchBootstrapPost() {
+    systemctl stop salt-api salt-minion salt-syndic salt-master || true
+    systemctl disable salt-api salt-minion salt-syndic salt-master || true
+
     for fname in minion master syndic api; do
         rm -f "/etc/rc${run_level}.d/S99salt-${fname}"
+        update-rc.d -f salt-${fname} disable >/dev/null 2>&1 || true
+        rm -f /etc/rc[0-9].d/K??salt-${fname}
+        rm -f /etc/init.d/salt-${fname}
     done
 }
+

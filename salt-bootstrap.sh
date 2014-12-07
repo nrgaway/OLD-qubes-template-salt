@@ -156,15 +156,15 @@ fi
 patchInstallPre
 
 # -----------------------------------------------------------------------------
-# Bind /rw dirs to salt dirs
-# -----------------------------------------------------------------------------
-bindDirectories
-
-# -----------------------------------------------------------------------------
 # Install modified salt-* unit files
 # -----------------------------------------------------------------------------
 systemctl stop salt-api salt-minion salt-syndic salt-master || true
 systemctl disable salt-api salt-minion salt-syndic salt-master || true
+
+# -----------------------------------------------------------------------------
+# Bind /rw dirs to salt dirs
+# -----------------------------------------------------------------------------
+bindDirectories
 
 install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-master.service" /etc/systemd/system
 install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-minion.service" /etc/systemd/system
@@ -225,17 +225,10 @@ echo
 echo "NOTE: It can take salt-master a long time to stop (1 to 2 minutes)"
 echo "without any indication of its progress.  Be patient :)"
 echo
-systemctl stop salt-minion || true
-systemctl stop salt-master || true
-
-systemctl disable salt-master || true
-systemctl disable salt-minion || true
-
-systemctl enable salt-master || true
-systemctl enable salt-minion || true
-
-systemctl start salt-master || true
-systemctl start salt-minion || true
+systemctl stop salt-minion salt-api salt-master || true
+systemctl disable salt-master salt-minion salt-api || true
+systemctl enable salt-master salt-minion salt-api || true
+systemctl start salt-master salt-minion salt-api || true
 
 # Just incase we have not yet authorized...
 if [ "$AUTHORIZE" == "1" ]; then

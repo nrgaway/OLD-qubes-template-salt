@@ -42,6 +42,13 @@ saltPurge() {
     rm -rf /etc/pki/minion
     rm -f /etc/pki/tls/certs/localhost.*
     rm -f /tmp/.salt*
+
+    if [ -e /usr/bin/pip ]; then
+        echo 'y' | /usr/bin/pip uninstall salt >/dev/null 2>&1 || true
+    fi
+ 
+    rm -rf /usr/lib/python2.7/dist-packages/salt || true
+    rm -rf /usr/lib/python2.7/site-packages/salt || true
 }
 
 # Run saltPurge if called directly

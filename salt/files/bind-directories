@@ -55,7 +55,7 @@ for bind in $@; do
     # Exit now if --umount option passed or VM is a TemplateVM
     if [ "${UMOUNT}" == "1" ] || [ -f "/var/run/qubes-service/updates-proxy-setup" ]; then
         echo "Umounting only..."
-        exit 0
+        continue
     fi
 
     # Make sure ro directory exists

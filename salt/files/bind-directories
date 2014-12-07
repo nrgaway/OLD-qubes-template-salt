@@ -2,7 +2,9 @@
 # vim: set ts=4 sw=4 sts=4 et :
 
 ##
-## bind-directories will bind mount a list of directories
+## bind-directories will bind mount a list of directories or files
+## or will attempt a soft-link if source (olddir) is a file and target
+## does not already exist
 ##
 ## Pass space seperated list 'olddir:newdir'
 ##
@@ -38,6 +40,14 @@ esac
 for bind in $@; do
     rw_dir="${bind%%:*}"
     ro_dir="${bind##*:}"
+
+    # Check to see if rw_dir is a file; if so just soft-link it
+    if ! [ -d "${rw_dir}" ] && [ -f "${rw_dir}" ]; then
+        if ! [ -a "${ro_dir}" ]; then
+            ln -sf "${rw_dir}" "${ro_dir}"
+        fi
+        continue
+    fi
 
     # Make sure ro directory is not mounted
     umount "${ro_dir}" 2> /dev/null || true

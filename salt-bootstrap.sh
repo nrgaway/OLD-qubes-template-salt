@@ -129,6 +129,7 @@ fi
 # Bind /rw dirs to salt dirs
 # -----------------------------------------------------------------------------
 "${dir}/salt/files/bind-directories" \
+    /usr/bin/python:/usr/local/bin/python \
     /rw/usrlocal/srv/salt:/srv/salt \
     /rw/usrlocal/srv/pillar:/srv/pillar \
     /rw/usrlocal/etc/salt:/etc/salt \

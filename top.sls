@@ -10,9 +10,9 @@ base:
     - salt.minion
     - salt.master
     - salt.gitfs
-    - salt.api
     - salt.syndic_absent
     #
+    #- salt.api
     #- salt.halite
     #- salt.api_absent
     #- salt.master_absent

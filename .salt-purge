@@ -6,19 +6,14 @@ dir="${path%/*}"
 
 source "${dir}/.salt-functions"
 source "${dir}/.salt-force-umount"
+source "${dir}/.salt-bind"
 
 # -----------------------------------------------------------------------------
 # Purge all salt related files
 # -----------------------------------------------------------------------------
 saltPurge() {
-    systemctl stop salt-api salt-minion salt-syndic salt-master
-    systemctl disable salt-api salt-minion salt-syndic salt-master
-
-    # Make sure everything is really umounted!
-    umount_kill "/srv/salt" || true
-    umount_kill "/srv/pillar" || true
-    umount_kill "/etc/salt" || true
-    umount_kill "/var/cache/salt" || true
+    # un-bind / umount all salt related directories that were bound
+    unbindDirectories
 
     # rw mount salt related files
     rm -rf /rw/usrlocal/etc/salt || true

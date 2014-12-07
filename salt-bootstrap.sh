@@ -7,6 +7,7 @@ dir="${path%/*}"
 source "${dir}/.salt-functions"
 source "${dir}/.salt-purge"
 source "${dir}/.salt-activate"
+source "${dir}/.salt-bind"
 
 # Auto authorize installed salt-minion if AUTHORIZE = "1"
 AUTHORIZE=1
@@ -157,12 +158,7 @@ patchInstallPre
 # -----------------------------------------------------------------------------
 # Bind /rw dirs to salt dirs
 # -----------------------------------------------------------------------------
-"${dir}/salt/files/bind-directories" \
-    /usr/bin/python:/usr/local/bin/python \
-    /rw/usrlocal/srv/salt:/srv/salt \
-    /rw/usrlocal/srv/pillar:/srv/pillar \
-    /rw/usrlocal/etc/salt:/etc/salt \
-    /rw/usrlocal/var/cache/salt:/var/cache/salt
+bindDirectories
 
 # -----------------------------------------------------------------------------
 # Install modified salt-* unit files

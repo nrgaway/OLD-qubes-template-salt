@@ -13,11 +13,12 @@ $with /usr/share/fonts/source-code-pro:
     - dir_mode: 755
     - file_mode: 644
   
-  $with ttmkfdir -o /usr/share/fonts/source-code-pro/fonts.scale -d /usr/share/fonts/source-code-pro > /usr/share/fonts/source-code-pro/fonts.dir && fc-cache -fv:
-    cmd.run: 
-      - creates: 
-        - /usr/share/fonts/source-code-pro/fonts.dir
-        - /usr/share/fonts/source-code-pro/fonts.scale
+  $if grains('os') == 'Fedora':
+    $with ttmkfdir -o /usr/share/fonts/source-code-pro/fonts.scale -d /usr/share/fonts/source-code-pro > /usr/share/fonts/source-code-pro/fonts.dir && fc-cache -fv:
+      cmd.run: 
+        - creates: 
+          - /usr/share/fonts/source-code-pro/fonts.dir
+          - /usr/share/fonts/source-code-pro/fonts.scale
 
 # Remove SourceCodePro directory if it exists (old naming format)
 /usr/share/fonts/SourceCodePro:

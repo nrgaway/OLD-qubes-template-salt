@@ -12,8 +12,8 @@ base:
     - salt.gitfs
     - salt.api
     - salt.syndic_absent
-    - salt.halite
     #
+    #- salt.halite
     #- salt.api_absent
     #- salt.master_absent
     #- salt.syndic
@@ -23,3 +23,4 @@ base:
     - theme
     - theme.fonts_ubuntu
     - theme.fonts_source_code_pro
+    - os

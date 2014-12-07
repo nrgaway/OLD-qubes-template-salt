@@ -23,6 +23,21 @@ if [ -f "${dir}/.debug" ]; then
     DEBUG=1
 fi
 
+# Dummy Placeholder patches
+function patchDependsPre() { true; }
+function patchDependsPost() { true; }
+function patchClonePre() { true; }
+function patchClonePost() { true; }
+function patchBootstrapPre() { true; }
+function patchBootstrapPost() { true; }
+function patchInstallPre() { true; }
+function patchInstallPost() { true; }
+
+# Check for patches
+if [ -f "${dir}/.patch-${ID}-${VERSION_ID}" ]; then
+    source "${dir}/.patch-${ID}-${VERSION_ID}"
+fi
+
 BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
 # -----------------------------------------------------------------------------
@@ -36,6 +51,8 @@ fi
 # Build Depends
 # -----------------------------------------------------------------------------
 if ! [ -f /tmp/.salt.build_deps ]; then
+    patchDependsPre
+
     RETVAL=0
     if [ "$ID" == "debian" -o "$ID" == "ubuntu" ]; then
         DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -62,12 +79,16 @@ if ! [ -f /tmp/.salt.build_deps ]; then
     if [ $RETVAL == 0 ]; then
         touch /tmp/.salt.build_deps
     fi
+
+    patchDependsPost
 fi
 
 # -----------------------------------------------------------------------------
 # Clone salt bootstrap
 # -----------------------------------------------------------------------------
 if [ /tmp/.salt.build_deps -a ! -f /tmp/.salt.cloned ]; then
+    patchClonePre
+
     RETVAL=0
 
     # XXX: Specify a specific tag so we don't run into regrerssion errors
@@ -81,6 +102,8 @@ if [ /tmp/.salt.build_deps -a ! -f /tmp/.salt.cloned ]; then
     if [ $RETVAL == 0 ]; then
         touch /tmp/.salt.cloned
     fi
+
+    patchClonePost
 fi
 
 # -----------------------------------------------------------------------------
@@ -113,6 +136,8 @@ fi
 
 # -----------------------------------------------------------------------------
 if [ /tmp/.salt.cloned -a ! -f /tmp/.salt.bootstrap ]; then
+    patchBootstrapPre
+
     RETVAL=0
 
     pushd /tmp/salt-bootstrap
@@ -123,7 +148,11 @@ if [ /tmp/.salt.cloned -a ! -f /tmp/.salt.bootstrap ]; then
     if [ $RETVAL == 0 ]; then
         touch /tmp/.salt.bootstrap
     fi
+
+    patchBootstrapPost
 fi
+
+patchInstallPre
 
 # -----------------------------------------------------------------------------
 # Bind /rw dirs to salt dirs
@@ -218,3 +247,5 @@ if [ "$AUTHORIZE" == "1" ]; then
     timer 30
     saltActivate
 fi
+
+patchInstallPost

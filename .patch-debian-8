@@ -1,0 +1,17 @@
+#!/bin/bash -e
+# vim: set ts=4 sw=4 sts=4 et :
+
+run_level=$(runlevel | awk '{ print $2 }')
+
+# Fake that services are enabled
+function patchBootstrapPre() {
+    for fname in minion master syndic api; do
+        touch "/etc/rc${run_level}.d/S99salt-${fname}"
+    done
+}
+
+function patchBootstrapPost() {
+    for fname in minion master syndic api; do
+        rm -f "/etc/rc${run_level}.d/S99salt-${fname}"
+    done
+}

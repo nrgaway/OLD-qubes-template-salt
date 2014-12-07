@@ -15,13 +15,7 @@ $python: |
 
 $with theme-dependencies:
   pkg.installed:
-    - names: 
-      - freetype-freeworld 
-      - gnome-tweak-tool 
-      - dconf-editor 
-      - xdg-user-dirs 
-      - gnome-themes-standard 
-      - xsettingsd
+    - names: $ThemeMap.theme_dependencies
 
   gsettings set org.gnome.settings-daemon.plugins.xsettings hinting slight:
     cmd.run: 

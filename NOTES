@@ -1,10 +1,16 @@
-TODO
-====
+NOTES
+=====
 
 salt-call --local saltutil.sync_all
 salt-call --local state.highstate
 salt-call --local --out=yaml state.show_sls python_pip
 salt '*' state.highstate -l debug
+
+RESEARCH
+--------
+- XDG_CURRENT_DESKTOP=gnome retext -style adwaita
+  will exporting the XDG_CURRENT_DESKTOP=gnome var help with UI?
+- gtk2-engines
 
 - Do I need all those depends in salt/master-minion, etc?  Cause bootstrap takes care of that
 - when working on cross platform depends, use pyobjects map over jinga

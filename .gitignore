@@ -1,2 +1,3 @@
 .debug
 .purge
+dev/gitfs-test.conf

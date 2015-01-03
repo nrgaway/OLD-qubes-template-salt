@@ -1,3 +1,6 @@
+#!yamlscript
+# vim: set syntax=yaml ts=2 sw=2 sts=2 et :
+
 ##
 # Install salt-master and its configuration files
 #
@@ -7,17 +10,22 @@
 #   - maybe keys should be pillars so all minions won't see them
 ##
 
-include: 
-  - salt
+$python: |
+    from salt://salt/map.sls import SaltMap
+    installed_by_repo = not __salt__['cmd.retcode'](SaltMap.installed_by_repo)
 
 salt-master:
-  pip.installed:
-    - name: salt
+  $if installed_by_repo:
+    pkg.installed:
+      - names:
+        - $SaltMap.salt
+        - $SaltMap.salt_master
+  $else:
+    pip.installed:
+      - name: salt
   service.running:
     - name: salt-master
     - enable: True
-    - require:
-      - pip: salt
     - watch:
       - file: /etc/salt/master
       - file: /etc/salt/master.d/nodegroups.conf
@@ -47,3 +55,4 @@ salt-master:
     - user: root
     - group: root
     - mode: 640
+

@@ -1,22 +1,22 @@
 #!/bin/bash -e
 # vim: set ts=4 sw=4 sts=4 et :
 
-path="$(readlink -m $0)"
-dir="${path%/*}"
+SRC_PATH="$(readlink -m $0)"
+SRC_DIR="${SRC_PATH%/*}"
 
-source "${dir}/.salt-functions"
+source "${SRC_DIR}/.salt-functions"
 
 # Bind /rw dirs to salt dirs
 function bindDirectories() {
-    "${dir}/salt/files/bind-directories" \
+    "${SRC_DIR}/salt/files/bind-directories" \
         /usr/bin/python:/usr/local/bin/python \
         /rw/usrlocal/srv/salt:/srv/salt \
         /rw/usrlocal/srv/pillar:/srv/pillar \
         /rw/usrlocal/etc/salt:/etc/salt \
         /rw/usrlocal/var/cache/salt:/var/cache/salt
 
-    systemctl enable salt-master salt-minion salt-api
     systemctl stop salt-master salt-minion salt-api
+    systemctl enable salt-master salt-minion salt-api
 }
 
 # un-bind / umount all salt related directories that were bound
@@ -32,7 +32,7 @@ function unbindDirectories() {
 }
 
 # Run [un]bindDirectories if called directly
-if [ "${path##*/}" == ".salt-bind" ]; then
+if [ "${SRC_PATH##*/}" == ".salt-bind" ]; then
     if [ "${1}" == "--unbind" ]; then
         unbindDirectories
     else

@@ -1,18 +1,23 @@
+#!yamlscript
+# vim: set syntax=yaml ts=2 sw=2 sts=2 et :
+
 ##
 # Install salt-minion and its configuration files
 ##
 
-include: 
-  - salt
+$python: |
+    from salt://salt/map.sls import SaltMap
+    installed_by_repo = not __salt__['cmd.retcode'](SaltMap.installed_by_repo)
 
 salt-minion:
-  pip.installed:
-    - name: salt
+  $if installed_by_repo:
+    pkg.installed: []
+  $else:
+    pip.installed:
+      - name: salt
   service.running:
     - name: salt-minion
     - enable: True
-    - require:
-      - pip: salt
     - watch:
       - file: /etc/salt/minion
       - file: /etc/systemd/system/salt-minion.service

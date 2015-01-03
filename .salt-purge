@@ -1,12 +1,12 @@
 #!/bin/bash -e
 # vim: set ts=4 sw=4 sts=4 et :
 
-path="$(readlink -m $0)"
-dir="${path%/*}"
+SRC_PATH="$(readlink -m $0)"
+SRC_DIR="${SRC_PATH%/*}"
 
-source "${dir}/.salt-functions"
-source "${dir}/.salt-force-umount"
-source "${dir}/.salt-bind"
+source "${SRC_DIR}/.salt-functions"
+source "${SRC_DIR}/.salt-force-umount"
+source "${SRC_DIR}/.salt-bind"
 
 # -----------------------------------------------------------------------------
 # Purge all salt related files
@@ -52,6 +52,6 @@ saltPurge() {
 }
 
 # Run saltPurge if called directly
-if [ "${path##*/}" == ".salt-purge" ]; then
+if [ "${SRC_PATH##*/}" == ".salt-purge" ]; then
     saltPurge
 fi

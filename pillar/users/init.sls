@@ -53,24 +53,24 @@
 #         uid: 400
 #
 
-groups:
-  shadow:
-    system: True
+#groups:
+#  shadow:
+#    system: True
 
-users:
-  admin:
-    uid: 98
-    createhome: False
-    password: $6$M6qqa5at$vlJuhZV4JdqIyQdaCdteCtturdi7v.Er2m/r4d1Y7HOgF9l/emXBaJHiOwsDveXS.t1Q58kYXqubNSa7JW8qM.
-    shell: /bin/bash
-    system: True
-    sudouser: True
-    sudo_rules:
-      - 'ALL=(ALL:ALL) NOPASSWD: ALL'
-    user.group:
-      name: admin
-      gid: 98
-      system: True
-    groups:
-      - sudo
-      - shadow
+#users:
+#  admin:
+#    uid: 98
+#    createhome: False
+#    password: $6$M6qqa5at$vlJuhZV4JdqIyQdaCdteCtturdi7v.Er2m/r4d1Y7HOgF9l/emXBaJHiOwsDveXS.t1Q58kYXqubNSa7JW8qM.
+#    shell: /bin/bash
+#    system: True
+#    sudouser: True
+#    sudo_rules:
+#      - 'ALL=(ALL:ALL) NOPASSWD: ALL'
+#    user.group:
+#      name: admin
+#      gid: 98
+#      system: True
+#    groups:
+#      - sudo
+#      - shadow

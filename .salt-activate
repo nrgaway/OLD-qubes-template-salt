@@ -6,10 +6,10 @@
 #
 # TemplateVM automatically accepts minion when installed
 
-path="$(readlink -m $0)"
-dir="${path%/*}"
+SRC_PATH="$(readlink -m $0)"
+SRC_DIR="${SRC_PATH%/*}"
 
-source "${dir}/.salt-functions"
+source "${SRC_DIR}/.salt-functions"
 
 # Instead of auto-accepting minions; just do it here
 function saltActivate() {
@@ -19,6 +19,6 @@ function saltActivate() {
 }
 
 # Run saltActivate if called directly
-if [ "${path##*/}" == ".salt-activate" ]; then
+if [ "${SRC_PATH##*/}" == ".salt-activate" ]; then
     saltActivate
 fi

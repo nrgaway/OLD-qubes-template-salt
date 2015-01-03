@@ -1,8 +1,5 @@
 #!yamlscript
-
-$defaults: False
-$pillars:
-  auto: False
+# vim: set syntax=yaml ts=2 sw=2 sts=2 et :
 
 $python: |
     from salt://salt/map.sls import SaltMap
@@ -23,7 +20,7 @@ $with certificate-dependencies:
 
       # Create a Certificate Authority (CA)
       salt-call --local tls.create_ca_signed_cert minion localhost:
-        cmd.run: 
+        cmd.run:
           - creates: /etc/pki/minion/certs/localhost.crt
 
   # Create a Self-Signed Certificate (CERT)

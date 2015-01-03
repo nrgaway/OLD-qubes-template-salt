@@ -1,13 +1,16 @@
 #!/bin/bash -e
 # vim: set ts=4 sw=4 sts=4 et :
 
-path="$(readlink -m $0)"
-dir="${path%/*}"
+MIN_SALT_VERSION=2014.7.0
+BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
-source "${dir}/.salt-functions"
-source "${dir}/.salt-purge"
-source "${dir}/.salt-activate"
-source "${dir}/.salt-bind"
+SRC_PATH="$(readlink -m $0)"
+SRC_DIR="${SRC_PATH%/*}"
+
+source "${SRC_DIR}/.salt-functions"
+source "${SRC_DIR}/.salt-purge"
+source "${SRC_DIR}/.salt-activate"
+source "${SRC_DIR}/.salt-bind"
 
 # Auto authorize installed salt-minion if AUTHORIZE = "1"
 AUTHORIZE=1
@@ -19,93 +22,117 @@ COPY_REPO=1
 # If a file named '.debug' exists in the same directory as 'salt-bootstrap.sh' 
 # then salt directories will be deleted before installation and development 
 # env will be set up
-if [ -f "${dir}/.debug" ]; then
+if [ -f "${SRC_DIR}/.debug" ]; then
     echo "DEBUG MODE IS ENABLED!"
     DEBUG=1
 fi
 
 # Dummy Placeholder patches
-function patchDependsPre() { true; }
-function patchDependsPost() { true; }
-function patchClonePre() { true; }
-function patchClonePost() { true; }
-function patchBootstrapPre() { true; }
-function patchBootstrapPost() { true; }
-function patchInstallPre() { true; }
-function patchInstallPost() { true; }
+patchDependsPre() { true; }
+patchDependsPost() { true; }
+patchClonePre() { true; }
+patchClonePost() { true; }
+patchBootstrapPre() { true; }
+patchBootstrapPost() { true; }
+patchInstallPre() { true; }
+patchInstallPost() { true; }
 
 # Check for patches
-if [ -f "${dir}/.patch-${ID}-${VERSION_ID}" ]; then
-    source "${dir}/.patch-${ID}-${VERSION_ID}"
+if [ -f "${SRC_DIR}/.patch-${ID}-${VERSION_ID}" ]; then
+    source "${SRC_DIR}/.patch-${ID}-${VERSION_ID}"
 fi
-
-BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 
 # -----------------------------------------------------------------------------
 # Simulate clean installation (purge all salt related files)
 # -----------------------------------------------------------------------------
-if [ "$DEBUG" == "1" ] || [ -f "${dir}/.purge" ]; then
+if [ "$DEBUG" == "1" ] || [ -f "${SRC_DIR}/.purge" ]; then
     saltPurge
 fi
 
 # -----------------------------------------------------------------------------
-# Build Depends
+# Check that version $1 is greater then or equal to $2
 # -----------------------------------------------------------------------------
-if ! [ -f /tmp/.salt.build_deps ]; then
-    patchDependsPre
+gte() {
+    [ "$1" = "$2" ] && return 0
+    [ "$1" = "$(echo -e "$1\n$2" | sort -rV | head -n1)" ]
+}
 
-    RETVAL=0
-    if [ "$ID" == "debian" -o "$ID" == "ubuntu" ]; then
-        DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-        apt-get --purge -y --force-yes remove salt-minion salt-master salt-syndic
+# -----------------------------------------------------------------------------
+# Install build depends, including salt if recent enough version in repo
+# -----------------------------------------------------------------------------
+installDepends() {
+    if ! [ -f /tmp/.salt.build_deps ]; then
+        patchDependsPre
 
-        DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-            apt-get update
-        retval $?
+        RETVAL=0
+        if [ "$ID" == "debian" -o "$ID" == "ubuntu" ]; then
+            DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+            apt-get --purge -y --force-yes remove salt-minion salt-master salt-syndic
 
-        DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-            apt-get -y --force-yes install ${BUILD_DEPS}
-        retval $?
-    elif [ "$ID" == "fedora" ]; then
-        yum erase -y salt
-        yum install -y ${BUILD_DEPS}
-        retval $?
-    else
-        echo "Exiting Build and Installation of salt"
-        echo "The operating system id is listed as: $id"
-        echo "And this script has only been tested to work on fedora, debian or ubuntu"
-        exit 1
+            DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+                apt-get update
+            retval $?
+
+            DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+                apt-get -y --force-yes install ${BUILD_DEPS}
+            retval $?
+        elif [ "$ID" == "fedora" ]; then
+            # No need to bootstrap salt if verion in repo recent enough
+            repo_salt_version="$(repoquery salt --qf "%{version}")"
+            
+            if gte $salt_version ${MIN_SALT_VERION}; then
+                if rpm -q salt; then
+                    yum reinstall -y salt salt-master salt-minion ${BUILD_DEPS}
+                else
+                    yum install -y salt salt-master salt-minion ${BUILD_DEPS}
+                fi
+                retval $?
+                if [ "$RETVAL" == "0" ]; then
+                    INSTALLED_BY_REPO=true
+                fi
+            else
+                yum erase -y salt
+                yum install -y ${BUILD_DEPS}
+                retval $?
+            fi
+        else
+            echo "Exiting Build and Installation of salt"
+            echo "The operating system id is listed as: $id"
+            echo "And this script has only been tested to work on fedora, debian or ubuntu"
+            exit 1
+        fi
+
+        if [ "$RETVAL" == "0" ]; then
+            touch /tmp/.salt.build_deps
+        fi
+
+        patchDependsPost
     fi
-
-    if [ $RETVAL == 0 ]; then
-        touch /tmp/.salt.build_deps
-    fi
-
-    patchDependsPost
-fi
+}
 
 # -----------------------------------------------------------------------------
 # Clone salt bootstrap
 # -----------------------------------------------------------------------------
-if [ /tmp/.salt.build_deps -a ! -f /tmp/.salt.cloned ]; then
-    patchClonePre
+cloneSaltBootstrap() {
+    if [ /tmp/.salt.build_deps -a ! -f /tmp/.salt.cloned ]; then
+        patchClonePre
 
-    RETVAL=0
+        RETVAL=0
 
-    # XXX: Specify a specific tag so we don't run into regrerssion errors
-    # XXX: Need to verify git signatures
+        # XXX: Specify a specific tag so we don't run into regrerssion errors
+        # XXX: Need to verify git signatures
+        if [ ! -d /tmp/salt-bootstrap ]; then
+            git clone https://github.com/saltstack/salt-bootstrap.git /tmp/salt-bootstrap
+        fi
 
-    if [ ! -d /tmp/salt-bootstrap ]; then
-        git clone https://github.com/saltstack/salt-bootstrap.git /tmp/salt-bootstrap
+        retval $?
+        if [ "$RETVAL" == "0" ]; then
+            touch /tmp/.salt.cloned
+        fi
+
+        patchClonePost
     fi
-
-    retval $?
-    if [ $RETVAL == 0 ]; then
-        touch /tmp/.salt.cloned
-    fi
-
-    patchClonePost
-fi
+}
 
 # -----------------------------------------------------------------------------
 # Install salt via bootstrap
@@ -134,107 +161,162 @@ fi
 #   * BS_SALT_MASTER_ADDRESS:   The IP or DNS name of the salt-master the minion should connect to
 #   * BS_SALT_GIT_CHECKOUT_DIR: The directory where to clone Salt on git installations
 #======================================================================================================================
+installSalt() {
+    if [ /tmp/.salt.cloned -a ! -f /tmp/.salt.bootstrap ]; then
+        patchBootstrapPre
 
-# -----------------------------------------------------------------------------
-if [ /tmp/.salt.cloned -a ! -f /tmp/.salt.bootstrap ]; then
-    patchBootstrapPre
+        RETVAL=0
 
-    RETVAL=0
+        pushd /tmp/salt-bootstrap
+            ./bootstrap-salt.sh -D -U -X -M git v2014.7.0
+            retval $?
+        popd
 
-    pushd /tmp/salt-bootstrap
-        ./bootstrap-salt.sh -D -U -X -M git v2014.7.0
-        retval $?
-    popd
+        if [ "$RETVAL" == "0" ]; then
+            touch /tmp/.salt.bootstrap
+        fi
 
-    if [ $RETVAL == 0 ]; then
-        touch /tmp/.salt.bootstrap
+        patchBootstrapPost
     fi
 
-    patchBootstrapPost
-fi
-
-patchInstallPre
+    patchInstallPre
+}
 
 # -----------------------------------------------------------------------------
 # Install modified salt-* unit files
 # -----------------------------------------------------------------------------
-systemctl stop salt-api salt-minion salt-syndic salt-master || true
-systemctl disable salt-api salt-minion salt-syndic salt-master || true
+installUnitFiles() {
+    systemctl stop salt-api salt-minion salt-syndic salt-master || true
+    systemctl disable salt-api salt-minion salt-syndic salt-master || true
+
+    install --owner=root --group=root --mode=0644 "${SRC_DIR}/salt/files/salt-master.service" /etc/systemd/system
+    install --owner=root --group=root --mode=0644 "${SRC_DIR}/salt/files/salt-minion.service" /etc/systemd/system
+    install --owner=root --group=root --mode=0644 "${SRC_DIR}/salt/files/salt-syndic.service" /etc/systemd/system
+    install --owner=root --group=root --mode=0644 "${SRC_DIR}/salt/files/salt-api.service" /etc/systemd/system
+    mkdir -p /usr/lib/salt
+    install --owner=root --group=root --mode=0755 "${SRC_DIR}/salt/files/bind-directories" /usr/lib/salt/bind-directories
+}
 
 # -----------------------------------------------------------------------------
-# Bind /rw dirs to salt dirs
+# Install salt configuration and state files, etc
 # -----------------------------------------------------------------------------
+configureSalt() {
+    install -d --owner=root --group=root --mode=0750 /etc/salt
+    install --owner=root --group=root --mode=0640 "${SRC_DIR}/salt/files/master" /etc/salt
+    install --owner=root --group=root --mode=0640 "${SRC_DIR}/salt/files/minion" /etc/salt
+    install -d --owner=root --group=root --mode=0750 /etc/salt/master.d
+    install -d --owner=root --group=root --mode=0750 /etc/salt/minion.d
+    install --owner=root --group=root --mode=0640 "${SRC_DIR}/salt/files/master.d/"* /etc/salt/master.d || true
+    install --owner=root --group=root --mode=0640 "${SRC_DIR}/salt/files/minion.d/"* /etc/salt/minion.d || true
+
+    install -d --owner=root --group=root --mode=0750 /srv/salt
+    install -d --owner=root --group=root --mode=0750 /srv/pillar
+    install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
+
+    if [ "$COPY_REPO" == "1" ]; then
+        cp -r "${SRC_DIR}/". /srv/salt
+
+        # Don't allow .debug or .purge files to copy over
+        rm -f /srv/salt/.debug
+        rm -f /srv/salt/.purge
+    else
+        install --owner=root --group=root --mode=0640 "${SRC_DIR}/top.sls" /srv/salt/top.sls
+        cp -r "${SRC_DIR}/salt" /srv/salt/salt || true
+        cp -r "${SRC_DIR}/python_pip" /srv/salt/python_pip || true
+        cp -r "${SRC_DIR}/vim" /srv/salt/vim || true
+        cp -r "${SRC_DIR}/theme" /srv/salt/theme || true
+    fi
+    cp -r "${SRC_DIR}/pillar/"* /srv/pillar || true
+    cp -r "${SRC_DIR}/salt-formulas/"* /srv/salt-formulas
+
+    # Replace master config files with development files
+    if [ "$DEBUG" == "1" ] && [ -d "${SRC_DIR}/dev" ]; then
+        pushd "${SRC_DIR}/dev"
+            ./dev-mode.sh
+        popd
+    fi
+
+    chmod -R u=rwX,g=rX,o-wrxX /srv/salt
+    chmod -R u=rwX,g=rX,o-wrxX /srv/salt-formulas
+    chmod -R u=rwX,g=rX,o-wrxX /srv/pillar
+    sync
+}
+
+# -----------------------------------------------------------------------------
+# Run highstate for the first time.  If salt was installed via bootstrap,
+# its will be replaced with git version
+# -----------------------------------------------------------------------------
+initialHighstate() {
+    systemctl enable salt-master salt-minion salt-api
+    systemctl start salt-master salt-minion salt-api
+
+    salt-call --local saltutil.sync_all
+    salt-call --local state.highstate || true
+    timer 5
+    sync
+
+    # Salt initially configured; restart and run a highstate again
+    echo
+    echo "salt-master and salt-minion will be stopped, disabled, re-enabled and then restarted."
+    echo
+    echo "NOTE: It can take salt-master a long time to stop (1 to 2 minutes)"
+    echo "without any indication of its progress.  Be patient :)"
+    echo
+    systemctl stop salt-minion salt-api salt-master || true
+    systemctl disable salt-master salt-minion salt-api || true
+    systemctl enable salt-master salt-minion salt-api || true
+    systemctl start salt-master salt-minion salt-api || true
+    salt-call --local state.highstate || true
+}
+
+# -----------------------------------------------------------------------------
+# Authorize Salt Minion
+# -----------------------------------------------------------------------------
+authorizeSalt() {
+    # Just incase we have not yet authorized...
+    if [ "$AUTHORIZE" == "1" ]; then
+        echo "Trying to authorize minion..."
+        timer 30
+        saltActivate
+    fi
+}
+
+
+# Main
+# ----
+
+INSTALLED_BY_REPO=false
+
+# Make sure there are no existing salt services currently running
+systemctl stop salt-api salt-minion salt-syndic salt-master || true
+
+# Install build depends, including salt if recent enough version in repo
+installDepends
+
+if [ "$INSTALLED_BY_REPO" == "false" ]; then
+    # Clone salt bootstrap
+    cloneSaltBootstrap
+
+    # Install salt via bootstrap (will return if installed by repo)
+    installSalt
+fi
+
+# Bind /rw dirs to salt dirs
 bindDirectories
 
-install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-master.service" /etc/systemd/system
-install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-minion.service" /etc/systemd/system
-install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-syndic.service" /etc/systemd/system
-install --owner=root --group=root --mode=0644 "${dir}/salt/files/salt-api.service" /etc/systemd/system
+# Install modified salt-* unit files
+installUnitFiles
 
-install -d --owner=root --group=root --mode=0750 /etc/salt
-install --owner=root --group=root --mode=0640 "${dir}/salt/files/master" /etc/salt
-install --owner=root --group=root --mode=0640 "${dir}/salt/files/minion" /etc/salt
-install -d --owner=root --group=root --mode=0750 /etc/salt/master.d
-install -d --owner=root --group=root --mode=0750 /etc/salt/minion.d
-install --owner=root --group=root --mode=0640 "${dir}/salt/files/master.d/"* /etc/salt/master.d || true
-install --owner=root --group=root --mode=0640 "${dir}/salt/files/minion.d/"* /etc/salt/minion.d || true
+# Install salt configuration and state files, etc
+configureSalt
 
-install -d --owner=root --group=root --mode=0750 /srv/salt
-install -d --owner=root --group=root --mode=0750 /srv/pillar
-install -d --owner=root --group=root --mode=0750 /srv/salt-formulas
+# Run highstate for the first time.  If salt was installed via bootstrap,
+# its will be replaced with git version
+initialHighstate
 
-if [ "$COPY_REPO" == "1" ]; then
-    cp -r "${dir}/". /srv/salt
+# Authorize Salt Minion
+authorizeSalt
 
-    # Don't allow .debug or .purge files to copy over
-    rm -f /srv/salt/.debug
-    rm -f /srv/salt/.purge
-else
-    install --owner=root --group=root --mode=0640 "${dir}/top.sls" /srv/salt/top.sls
-    cp -r "${dir}/salt" /srv/salt/salt || true
-    cp -r "${dir}/python_pip" /srv/salt/python_pip || true
-    cp -r "${dir}/vim" /srv/salt/vim || true
-    cp -r "${dir}/theme" /srv/salt/theme || true
-fi
-cp -r "${dir}/pillar/"* /srv/pillar || true
-
-# Replace master config files with development files
-if [ "$DEBUG" == "1" ] && [ -d "${dir}/dev" ]; then
-    pushd "${dir}/dev"
-        ./dev-mode.sh
-    popd
-fi
-
-chmod -R u=rwX,g=rX,o-wrxX /srv/salt
-chmod -R u=rwX,g=rX,o-wrxX /srv/pillar
-sync
-
-systemctl enable salt-master salt-minion salt-api
-systemctl start salt-master salt-minion salt-api
-
-salt-call --local saltutil.sync_all
-salt-call --local state.highstate -l debug || true
-timer 5
-sync
-
-# Salt was replaced, so safely restart it
-echo
-echo "Since salt was replaced, salt-master and salt-minion will be stopped,"
-echo "disabled, re-enabled and then restarted."
-echo
-echo "NOTE: It can take salt-master a long time to stop (1 to 2 minutes)"
-echo "without any indication of its progress.  Be patient :)"
-echo
-systemctl stop salt-minion salt-api salt-master || true
-systemctl disable salt-master salt-minion salt-api || true
-systemctl enable salt-master salt-minion salt-api || true
-systemctl start salt-master salt-minion salt-api || true
-
-# Just incase we have not yet authorized...
-if [ "$AUTHORIZE" == "1" ]; then
-    echo "Trying to authorize minion..."
-    timer 30
-    saltActivate
-fi
-
+# Run any additional post installation patches
 patchInstallPost
+

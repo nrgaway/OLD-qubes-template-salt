@@ -20,6 +20,10 @@ $with /usr/share/fonts/ubuntu-font-family:
           - /usr/share/fonts/ubuntu-font-family/fonts.dir
           - /usr/share/fonts/ubuntu-font-family/fonts.scale
 
+# Debian 
+# Rebuilds fonts cache
+# fc-cache -fv  rebuilds cached list of fonts 
+
 # Remove ubuntu directory if it exists (old naming format)
 /usr/share/fonts/ubuntu:
   file.absent: []

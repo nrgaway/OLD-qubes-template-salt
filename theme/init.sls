@@ -13,6 +13,13 @@ $pillars:
 $python: |
     from salt://theme/map.sls import ThemeMap
 
+# TODO:
+# Look into Infinity fonts for Debian
+# http://forums.debian.net/viewtopic.php?f=16&t=88545
+#
+# REbuild Debian font cache after installing fonts:
+# fc-cache -fv  rebuilds cached list of fonts fc-cache -fv  rebuilds cached list of fonts 
+
 $with theme-dependencies:
   pkg.installed:
     - names: $ThemeMap.theme_dependencies

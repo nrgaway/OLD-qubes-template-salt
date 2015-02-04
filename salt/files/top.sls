@@ -26,7 +26,7 @@ base:
     - salt.gitfs_dev
     - nginx
     - nginx.common
-    - nginx.source
+    - nginx.package
     - nginx.users
     - jenkins
 

@@ -1,3 +1,11 @@
+#!jinja|yamlscript
+#
+# salt-call --local --out=yaml state.show_sls nginx.init
+#
+$defaults: True
+$test_file:
+  - salt://nginx/init.test
+
 {% from "nginx/map.jinja" import nginx as nginx_map with context %}
 
 include:

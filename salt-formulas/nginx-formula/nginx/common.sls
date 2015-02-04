@@ -5,12 +5,24 @@
 {% set conf_template = nginx.get('conf_template', 'salt://nginx/templates/config.jinja') -%}
 
 {{ home }}:
-  file:
-    - directory
+  file.directory:
+    - name: {{ home }}
     - user: {{ nginx_map.default_user }}
     - group: {{ nginx_map.default_group }}
     - mode: 0755
     - makedirs: True
+    - require:
+      - user: {{ nginx_map.default_user }}
+      - group: {{ nginx_map.default_group }}
+  group.present:
+    - name: {{ nginx_map.default_group }}
+  user.present:
+    - name: {{ nginx_map.default_user }}
+    - home: {{ home }}
+    - groups:
+      - {{ nginx_map.default_group }}
+    - require:
+      - group: {{ nginx_map.default_group }}
 
 /usr/share/nginx:
   file:

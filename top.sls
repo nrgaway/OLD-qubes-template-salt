@@ -1,8 +1,4 @@
 #
-# Intial base top.sls
-# (Will be replaced after first run)
-
-#
 # salt-call --local state.highstate
 # salt '*' state.highstate -l debug
 #
@@ -14,7 +10,7 @@ base:
     - salt.minion
     - salt.master
     - salt.api
-    - salt.gitfs
+    # salt.gitfs
     # salt.syndic
     # salt.halite
     # salt.api_absent
@@ -22,8 +18,15 @@ base:
     - salt.syndic_absent
     - salt.halite_absent
     - vim
-    - users
+    # users
     - theme
     - theme.fonts_ubuntu
     - theme.fonts_source_code_pro
+    # --- development ---
+    # salt.gitfs_dev
+    # nginx
+    # nginx.common
+    # nginx.package
+    # nginx.users
+    # jenkins
 

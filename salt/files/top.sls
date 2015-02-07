@@ -18,15 +18,15 @@ base:
     - salt.syndic_absent
     - salt.halite_absent
     - vim
-    - users
+    # users
     - theme
     - theme.fonts_ubuntu
     - theme.fonts_source_code_pro
     # --- development ---
-    - salt.gitfs_dev
-    - nginx
-    - nginx.common
-    - nginx.package
-    - nginx.users
-    - jenkins
+    # salt.gitfs_dev
+    # nginx
+    # nginx.common
+    # nginx.package
+    # nginx.users
+    # jenkins
 

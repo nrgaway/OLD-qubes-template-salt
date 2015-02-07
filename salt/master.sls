@@ -28,7 +28,7 @@ salt-master:
     - enable: True
     - watch:
       - file: /etc/salt/master
-      - file: /etc/salt/master.d/nodegroups.conf
+      # file: /etc/salt/master.d/nodegroups.conf
       - file: /etc/salt/master
       - file: /etc/systemd/system/salt-master.service
 
@@ -49,10 +49,10 @@ salt-master:
     - mode: 640
 
 # nodegroups configuration file
-/etc/salt/master.d/nodegroups.conf:
-  file.managed:
-    - source: salt://salt/files/master.d/nodegroups.conf
-    - user: root
-    - group: root
-    - mode: 640
+#/etc/salt/master.d/nodegroups.conf:
+#  file.managed:
+#    - source: salt://salt/files/master.d/nodegroups.conf
+#    - user: root
+#    - group: root
+#    - mode: 640
 

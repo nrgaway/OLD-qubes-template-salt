@@ -5,16 +5,17 @@
 
 base:
   '*':
+    - os
     - python_pip
     - salt
     - salt.minion
-    - salt.master
-    - salt.api
+    # salt.master
+    # salt.api
     # salt.gitfs
     # salt.syndic
     # salt.halite
-    # salt.api_absent
-    # salt.master_absent
+    - salt.api_absent
+    - salt.master_absent
     - salt.syndic_absent
     - salt.halite_absent
     - vim

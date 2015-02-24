@@ -23,7 +23,8 @@ $with salt-dependencies:
 
   $if installed_by_repo:
     salt:
-      pkg.installed
+      pkg.installed:
+        - name: $SaltMap.salt
 
   $else:
     $with salt-pip-dependencies:

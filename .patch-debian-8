@@ -4,26 +4,61 @@
 path="$(readlink -m $0)"
 dir="${path%/*}"
 
-source "${dir}/.salt-functions"
+source "${dir}/.salt-functions.sh"
 
-run_level=$(runlevel | awk '{ print $2 }')
+if [ ${VERSION_ID} == "7" ]; then
+    DIST="wheezy"
+elif [ ${VERSION_ID} == "8" ]; then
+    DIST="jessie"
+fi
+
+if [ "X${DIST}" != "X" ]; then
+    # Add Debian saltstack repo
+    echo "deb http://debian.saltstack.com/debian ${DIST}-saltstack main" > /etc/apt/sources.list.d/saltstack.list
+
+    # TODO: Verify fingerprint
+    # Add saltstack key
+#    wget -O - http://debian.saltstack.com/debian-salt-team-joehealy.gpg.key|apt-key add -
+
+#    DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+#        apt-get update
+#    retval $?
+
+    while read line
+    do
+        version=${line##* }
+        gte ${version} ${MIN_SALT_VERION} && repo_salt_version=${version}; break;
+    done <<< "$(apt-cache show salt-master | grep Version | sort -r)"
+fi
+
+
+#
+# No suitable version to install via apt-get; prepare to bootstrap
+#
 
 # Fake that services are enabled
 function patchBootstrapPre() {
-    for fname in minion master syndic api; do
-        touch "/etc/rc${run_level}.d/S99salt-${fname}"
-    done
+    if [ "X${repo_salt_version}" == "X" ]; then
+        run_level=$(runlevel | awk '{ print $2 }')
+
+        for fname in minion master syndic api; do
+            touch "/etc/rc${run_level}.d/S99salt-${fname}"
+       done
+    fi
 }
 
 function patchBootstrapPost() {
-    systemctl stop salt-api salt-minion salt-syndic salt-master || true
-    systemctl disable salt-api salt-minion salt-syndic salt-master || true
+    if [ "X${repo_salt_version}" == "X" ]; then
+        run_level=$(runlevel | awk '{ print $2 }')
 
-    for fname in minion master syndic api; do
-        rm -f "/etc/rc${run_level}.d/S99salt-${fname}"
-        update-rc.d -f salt-${fname} disable >/dev/null 2>&1 || true
-        rm -f /etc/rc[0-9].d/K??salt-${fname}
-        rm -f /etc/init.d/salt-${fname}
-    done
+        systemctl stop salt-api salt-minion salt-syndic salt-master || true
+        systemctl disable salt-api salt-minion salt-syndic salt-master || true
+
+        for fname in minion master syndic api; do
+            rm -f "/etc/rc${run_level}.d/S99salt-${fname}"
+            update-rc.d -f salt-${fname} disable >/dev/null 2>&1 || true
+            rm -f /etc/rc[0-9].d/K??salt-${fname}
+            rm -f /etc/init.d/salt-${fname}
+        done
+    fi
 }
-

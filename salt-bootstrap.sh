@@ -7,7 +7,7 @@ BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
 SRC_PATH="$(readlink -m $0)"
 SRC_DIR="${SRC_PATH%/*}"
 
-source "${SRC_DIR}/.salt-functions"
+source "${SRC_DIR}/.salt-functions.sh"
 source "${SRC_DIR}/.salt-purge"
 source "${SRC_DIR}/.salt-activate"
 source "${SRC_DIR}/.salt-bind"
@@ -50,14 +50,6 @@ if [ "$DEBUG" == "1" ] || [ -f "${SRC_DIR}/.purge" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# Check that version $1 is greater then or equal to $2
-# -----------------------------------------------------------------------------
-gte() {
-    [ "$1" = "$2" ] && return 0
-    [ "$1" = "$(echo -e "$1\n$2" | sort -rV | head -n1)" ]
-}
-
-# -----------------------------------------------------------------------------
 # Install build depends, including salt if recent enough version in repo
 # -----------------------------------------------------------------------------
 installDepends() {
@@ -66,21 +58,46 @@ installDepends() {
 
         RETVAL=0
         if [ "$ID" == "debian" -o "$ID" == "ubuntu" ]; then
-            DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-            apt-get --purge -y --force-yes remove salt-minion salt-master salt-syndic
+            # NOTE: currently repo_salt_version is set in .patch-debian-7/8 which will
+            #       set variable if there is a suitable salt candidate to install
+            # TODO: Add code for ubuntu
 
-            DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-                apt-get update
-            retval $?
+            # No need to bootstrap salt if version in repo recent enough
+            if gte ${repo_salt_version} ${MIN_SALT_VERION}; then
+                installed=$(apt-cache policy salt-master | grep Installed)
+                if [ ${installed##* } == "(none)" ]; then
+                    installed=''
+                fi
 
-            DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
-                apt-get -y --force-yes install ${BUILD_DEPS}
-            retval $?
+                if [ "X${installed}" != "X" ]; then
+                    DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+                        apt-get -y --force-yes install --reinstall salt-minion salt-master ${BUILD_DEPS}
+                else
+                    DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+                        apt-get -y --force-yes install salt-minion salt-master ${BUILD_DEPS}
+                fi
+                retval $?
+
+                if [ "$RETVAL" == "0" ]; then
+                    touch /tmp/.salt.installed_by_repo
+                fi
+            else
+                DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+                apt-get --purge -y --force-yes remove salt-minion salt-master salt-syndic
+
+                DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+                    apt-get update
+                retval $?
+
+                DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+                    apt-get -y --force-yes install ${BUILD_DEPS}
+                retval $?
+            fi
         elif [ "$ID" == "fedora" ]; then
-            # No need to bootstrap salt if verion in repo recent enough
+            # No need to bootstrap salt if version in repo recent enough
             repo_salt_version="$(repoquery salt --qf "%{version}")"
             
-            if gte $salt_version ${MIN_SALT_VERION}; then
+            if gte ${repo_salt_version} ${MIN_SALT_VERION}; then
                 if rpm -q salt; then
                     yum reinstall -y salt salt-master salt-minion ${BUILD_DEPS}
                 else
@@ -88,7 +105,7 @@ installDepends() {
                 fi
                 retval $?
                 if [ "$RETVAL" == "0" ]; then
-                    INSTALLED_BY_REPO=true
+                    touch /tmp/.salt.installed_by_repo
                 fi
             else
                 yum erase -y salt
@@ -285,15 +302,13 @@ authorizeSalt() {
 # Main
 # ----
 
-INSTALLED_BY_REPO=false
-
 # Make sure there are no existing salt services currently running
 systemctl stop salt-api salt-minion salt-syndic salt-master || true
 
 # Install build depends, including salt if recent enough version in repo
 installDepends
 
-if [ "$INSTALLED_BY_REPO" == "false" ]; then
+if [ ! -e "/tmp/.salt.installed_by_repo" ]; then
     # Clone salt bootstrap
     cloneSaltBootstrap
 

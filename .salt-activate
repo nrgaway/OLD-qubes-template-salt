@@ -9,7 +9,7 @@
 SRC_PATH="$(readlink -m $0)"
 SRC_DIR="${SRC_PATH%/*}"
 
-source "${SRC_DIR}/.salt-functions"
+source "${SRC_DIR}/.salt-functions.sh"
 
 # Instead of auto-accepting minions; just do it here
 function saltActivate() {

@@ -8,6 +8,9 @@ salt '*' state.highstate -l debug
 
 RESEARCH
 --------
+- Seems like when I replace /root/.config/Trolltech.conf with copy from /hone/users/.config/Trolltech.conf
+  the root graphics start appearing nicely!
+
 - XDG_CURRENT_DESKTOP=gnome retext -style adwaita
   will exporting the XDG_CURRENT_DESKTOP=gnome var help with UI?
 - gtk2-engines

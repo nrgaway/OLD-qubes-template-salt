@@ -1,0 +1,18 @@
+Qubes Management
+================
+
+- Install salt via template +salt
+- Install salt via dom0
+  - qvm-run copy
+  - qvm-execute to install
+  - qvm hightstate-test
+  - qvm get-report
+  - send to SaltVM
+
+Salt Modules
+============
+- qvm-run
+- start, stop, create (like qubes manager)
+- qubes-dom0-update in place of yum update
+
+

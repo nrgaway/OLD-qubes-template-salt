@@ -1,6 +1,6 @@
 vim:
   pkg:
-    {% if grains['os_family'] == 'RedHat' %}
+    {% if grains['os_family'] == 'RedHat' or grains['os_family'] == 'Qubes' %}
     - name: vim-enhanced
     {% elif grains['os'] == 'Debian' %}
     - name: vim-nox

@@ -1,33 +1,48 @@
+# vim: set syntax=yaml ts=2 sw=2 sts=2 et :
 #
-# First Run only: sync any modules, etc
-# salt-call --local saltutil.sync_all
+# 1) Intial Setup: sync any modules, etc
+# --> salt-call --local saltutil.sync_all
 #
-# Highstate will execute all states
-# salt-call --local state.highstate
+# 2) Initial Key Import:
+# --> salt-call --local state.sls salt.gnupg
+#
+# 3) Highstate will execute all states
+# --> salt-call --local state.highstate
 #
 
 base:
   '*':
-    # python_pip
-    # salt
-    # salt.minion
+    # --- salt applications ---
+    - python_pip
+    - salt
+    - salt.gnupg
+    - salt.minion
     # salt.master
     # salt.api
     # salt.gitfs
     # salt.syndic
     # salt.halite
-    # salt.api_absent
-    # salt.master_absent
-    # salt.syndic_absent
-    # salt.halite_absent
+    # salt.minion.absent    # Not implemented
+    - salt.master_absent
+    - salt.api_absent
+    - salt.syndic_absent
+    - salt.halite_absent
 
-    # vim
+    # --- system configurations ---
+    # users
+
+    # --- dom0 configurations ---
     - dom0
 
-    # users
+    # --- utilities ---
+    # os
+    - vim
+
+    # --- appearance ---
     # theme
     # theme.fonts_ubuntu
     # theme.fonts_source_code_pro
+
     # --- development ---
     # salt.gitfs_dev
     # nginx
@@ -35,4 +50,3 @@ base:
     # nginx.package
     # nginx.users
     # jenkins
-

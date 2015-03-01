@@ -60,19 +60,18 @@ __virtualname__ = 'pkg'
 
 def __virtual__():
     '''
-    Confine this module to yum based systems
+    Confine this module to qubes and yum based systems
     '''
     if __opts__.get('yum_provider') == 'yumpkg_api':
         return False
     try:
-        os_grain = __grains__['os'].lower()
-        os_family = __grains__['os_family'].lower()
+        virtual_grain = __grains__['virtual'].lower()
+        virtual_subtype = __grains__['virtual_subtype'].lower()
     except Exception:
         return False
 
-    enabled = ('amazon', 'xcp', 'xenserver')
-
-    if os_family == 'qubes' or os_grain in enabled:
+    enabled = ('xen dom0')
+    if virtual_grain == 'qubes' or virtual_subtype in enabled:
         return __virtualname__
     return False
 

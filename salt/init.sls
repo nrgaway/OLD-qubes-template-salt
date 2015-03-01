@@ -68,3 +68,39 @@ $with salt-dependencies:
       - user: root
       - group: root
       - mode: 640
+
+  # salt file and directory permissions
+  /srv/salt:
+    file.directory:
+      - user: root
+      - group: root
+      - dir_mode: 750
+      - file_mode: 640
+      - recurse:
+        - user
+        - group
+        - mode
+
+  # salt-formulas file and directory permissions
+  /srv/salt-formulas:
+    file.directory:
+      - user: root
+      - group: root
+      - dir_mode: 750
+      - file_mode: 640
+      - recurse:
+        - user
+        - group
+        - mode
+
+  # pillar file and directory permissions
+  /srv/pillar:
+    file.directory:
+      - user: root
+      - group: root
+      - dir_mode: 750
+      - file_mode: 640
+      - recurse:
+        - user
+        - group
+        - mode

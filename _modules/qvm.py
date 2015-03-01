@@ -11,7 +11,9 @@ import logging
 # Import salt libs
 import salt.utils
 from salt.utils import which as _which
-from salt.exceptions import SaltInvocationError
+from salt.exceptions import (
+    CommandExecutionError, SaltInvocationError
+)
 
 # Import Qubes libs
 from qubes.qubes import QubesVmCollection
@@ -25,7 +27,16 @@ def __virtual__():
     '''
     Confine this module to Qubes dom0 based systems
     '''
-    return True
+    try:
+        virtual_grain = __grains__['virtual'].lower()
+        virtual_subtype = __grains__['virtual_subtype'].lower()
+    except Exception:
+        return False
+
+    enabled = ('xen dom0')
+    if virtual_grain == 'qubes' or virtual_subtype in enabled:
+        return __virtualname__
+    return False
 
 #__outputter__ = {
 #    'get_prefs': 'txt',

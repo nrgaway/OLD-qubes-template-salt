@@ -2,7 +2,7 @@
 # vim: set ts=4 sw=4 sts=4 et :
 
 MIN_SALT_VERSION=2014.7.0
-BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip"
+BUILD_DEPS="vim git ca-certificates lsb-release rsync python-dulwich python-pip python-gnupg"
 
 SRC_PATH="$(readlink -m $0)"
 SRC_DIR="${SRC_PATH%/*}"
@@ -15,12 +15,12 @@ source "${SRC_DIR}/.salt-bind"
 # Auto authorize installed salt-minion if AUTHORIZE = "1"
 AUTHORIZE=1
 
-# If COPY_REPO="1" then this whole repo will be copied to /srv/salt so the 
+# If COPY_REPO="1" then this whole repo will be copied to /srv/salt so the
 # included state files can be updated via git
 COPY_REPO=1
 
-# If a file named '.debug' exists in the same directory as 'salt-bootstrap.sh' 
-# then salt directories will be deleted before installation and development 
+# If a file named '.debug' exists in the same directory as 'salt-bootstrap.sh'
+# then salt directories will be deleted before installation and development
 # env will be set up
 if [ -f "${SRC_DIR}/.debug" ]; then
     echo "DEBUG MODE IS ENABLED!"
@@ -96,7 +96,7 @@ installDepends() {
         elif [ "$ID" == "fedora" ]; then
             # No need to bootstrap salt if version in repo recent enough
             repo_salt_version="$(repoquery salt --qf "%{version}")"
-            
+
             if gte ${repo_salt_version} ${MIN_SALT_VERION}; then
                 if rpm -q salt; then
                     yum reinstall -y salt salt-master salt-minion ${BUILD_DEPS}

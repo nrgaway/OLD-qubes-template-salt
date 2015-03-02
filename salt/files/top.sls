@@ -9,6 +9,9 @@
 # 3) Highstate will execute all states
 # --> salt-call --local state.highstate
 #
+# 4) Highstate test mode only.  Note note all states seem to conform to test
+#    mode and may apply state anyway.  Needs more testing to confirm or not!
+# --> salt-call --local state.highstate test=True
 
 base:
   '*':

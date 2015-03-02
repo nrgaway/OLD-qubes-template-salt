@@ -25,8 +25,8 @@ import logging
 #import re
 
 # Import salt libs
-#import salt.utils
-#from salt.output import nested
+import salt.utils
+from salt.output import nested
 #from salt.utils import namespaced_function as _namespaced_function
 #from salt.utils.odict import OrderedDict as _OrderedDict
 #from salt._compat import string_types
@@ -44,79 +44,203 @@ def __virtual__():
     '''
     return 'qvm.get_prefs' in __salt__
 
-unset = object()
-def prefs(name,
-          label=unset,
-          type=unset,
-          template=unset,
-          netvm=unset,
-          updateable=unset,
-          autostart=unset,
-          installed_by_rpm=unset,
-          include_in_backups=unset,
-          last_backup=unset,
-          dir=unset,
-          config=unset,
-          pcidevs=unset,
-          root_img=unset,
-          root_volatile_img=unset,
-          private_img=unset,
-          vcpus=unset,
-          memory=unset,
-          maxmem=unset,
-          MAC=unset,
-          kernel=unset,
-          kernelopts=unset,
-          debug=unset,
-          default_user=unset,
-          qrexec_timeout=unset,
-          internal=unset,
-          **kwargs
-        ):
-    '''
-    '''
-    kwargs['saltenv'] = __env__
+'''
+TODO:
+=====
 
+- Consider creating an additional state that will allow all vm related
+  configurations to be within one state (qvm.vm)
+
+- Functions to implement (qvm-commands):
+  [ ] Not Implemented
+  [X] Implemented
+  [1-9] Next to Implement
+
+  [ ] qvm-add-appvm       [X] qvm-create              [ ] qvm-ls                       [2] qvm-shutdown
+  [ ] qvm-add-template    [ ] qvm-create-default-dvm  [ ] qvm-pci                      [2] qvm-start
+  [ ] qvm-backup          [ ] qvm-firewall            [X] qvm-prefs                    [ ] qvm-sync-appmenus
+  [ ] qvm-backup-restore  [ ] qvm-grow-private        [X] qvm-remove                   [ ] qvm-sync-clock
+  [ ] qvm-block           [ ] qvm-grow-root           [ ] qvm-revert-template-changes  [ ] qvm-template-commit
+  [X] qvm-check           [ ] qvm-init-storage        [3] qvm-run                      [ ] qvm-trim-template
+  [X] qvm-clone           [2] qvm-kill                [1] qvm-service                  [ ] qvm-usb
+'''
+
+
+def _nested_output(obj):
+    '''
+    Serialize obj and format for output
+    '''
+    nested.__opts__ = __opts__
+    ret = nested.output(obj).rstrip()
+    return ret
+
+
+# XXX: rename to something more descriptive; used to get error code and output only
+def _default(name, function, *args, **kwargs):
+    ret = {'name': name,
+           'stdout': '',
+           'stderr': '',
+           'retcode': 0,
+           'changes': {},
+          }
+
+    result = __salt__[function](name, *args, **kwargs)
+    ret.update(result)
+
+    ret['comment'] = ret['stdout']
+    ret['result'] = True if not ret['retcode'] else False
+    return ret
+
+
+def check(name, **kwargs):
+    '''
+    Returns True is vmname exists
+    '''
+    ret = _default(name, 'qvm.check')
+    return ret
+
+
+def missing(name, **kwargs):
+    '''
+    Returns True is vmname does not exist
+    '''
+    ret = _default(name, 'qvm.check')
+    ret['result'] = not ret['result']
+    return ret
+
+
+def running(name, **kwargs):
+    '''
+    Returns True is vmname is running, False if not
+    '''
+    ret = _default(name, 'qvm.state')
+    return ret
+
+
+def dead(name, **kwargs):
+    '''
+    Returns True is vmname is halted
+    '''
+    ret = _default(name, 'qvm.state')
+    ret['result'] = not ret['result']
+    return ret
+
+
+def create(name, **kwargs):
+    '''
+    '''
     ret = {'name': name,
            'changes': {},
            'result': False,
            'comment': ''}
 
-    current_state = __salt__['qvm.get_prefs'](name)
-    if not current_state:
-        ret['result'] = False
-        ret['comment'] = 'VM {0} does not exist'.format(name)
+    args, fnargs = salt.utils.arg_lookup(__salt__['qvm.create']).values()
+    for key, value in kwargs.items():
+        if key in fnargs:
+            fnargs[key] = value
+
+    # Support test mode only
+    if __opts__['test'] == True:
+        # Pre-check if create should succeed
+        ret = _default(name, 'qvm.check')
+        ret['result'] = not ret['result']
+        if not ret['result']:
+            return ret
+        ret['result'] = None
+        ret['comment'] = 'VM {0} will be created\n{1}'.format(name, _nested_output(fnargs))
         return ret
 
-    new_state = {}
-    for key, value in current_state.items():
-        arg = locals().get(key, unset)
-        if arg != unset and arg != value:
-            new_state[key] = arg
-            ret['changes'][key] = {}
-            ret['changes'][key]['old'] = value
-            ret['changes'][key]['new'] = arg
+    ret = _default(name, 'qvm.create', **fnargs)
+    return ret
 
+
+def remove(name, **kwargs):
+    '''
+    '''
+    ret = {'name': name,
+           'changes': {},
+           'result': False,
+           'comment': ''}
+
+    args, fnargs = salt.utils.arg_lookup(__salt__['qvm.remove']).values()
+    for key, value in kwargs.items():
+        if key in fnargs:
+            fnargs[key] = value
+
+    # Support test mode only
+    if __opts__['test'] == True:
+        # Pre-check if create should succeed
+        ret = _default(name, 'qvm.check')
+        if not ret['result']:
+            return ret
+        ret['result'] = None
+        ret['comment'] = 'VM {0} will be removed\n{1}'.format(name, _nested_output(fnargs))
+        return ret
+
+    ret = _default(name, 'qvm.remove', **fnargs)
+    return ret
+
+
+def clone(name, target, **kwargs):
+    '''
+    '''
+    ret = {'name': name,
+           'changes': {},
+           'result': False,
+           'comment': ''}
+
+    args, fnargs = salt.utils.arg_lookup(__salt__['qvm.clone']).values()
+    for key, value in kwargs.items():
+        if key in fnargs:
+            fnargs[key] = value
+
+    # Support test mode only
+    if __opts__['test'] == True:
+        # Pre-check if create should succeed
+        ret = _default(name, 'qvm.check')
+        ret['result'] = not ret['result']
+        if not ret['result']:
+            return ret
+        ret['result'] = None
+        ret['comment'] = 'VM {0} will be cloned\n{1}'.format(name, _nested_output(fnargs))
+        return ret
+
+    fnargs['target'] = target
+    ret = _default(name, 'qvm.clone', **fnargs)
+    return ret
+
+
+def service(name, **kwargs):
+    ret = {'name': name,
+           'changes': {},
+           'result': False,
+           'comment': ''}
     # Support test mode only
     if new_state and __opts__['test'] == True:
             ret['result'] = None
             ret['comment'] = 'Preferences of {0} will be changed'.format(name)
             return ret
-
-    if new_state:
-        result = __salt__['qvm.set_prefs'](name, new_state)
-        ret['comment'] = result['comment']
-
-        for key in result['changes'].keys():
-            result['changes'][key]['old'] = ret['changes'][key]['old']
-        ret['changes'] = result['changes']
-
-        if result['retcode']:
-            ret['result'] =  False
-            return ret
-        ret['result'] = True
-        return ret
-
     ret['result'] = True
     ret['comment'] = 'Preferences are already in desired state for {0}'.format(name)
+    return ret
+
+
+def prefs(name, **kwargs):
+    '''
+    Sets vmname preferences (qvm-prefs)
+    '''
+    ret = {'name': name,
+           'changes': {},
+           'result': False,
+           'comment': ''}
+
+    # Support test mode only
+    if __opts__['test'] == True:
+        current_state = __salt__['qvm.prefs'](name)
+        data = dict([(key, value) for key, value in kwargs.items() if value != current_state[key]])
+        ret['result'] = None
+        ret['comment'] = 'The following preferences will be changed:\n{0}'.format(_nested_output(data))
+        return ret
+
+    ret = _default(name, 'qvm.prefs', **kwargs)
     return ret

@@ -1,6 +1,18 @@
 Qubes Management
 ================
 
+Next Steps
+==========
+- fix yum search
+- qvm-create / start / shutdown / remove
+- change pref with creating as well
+- vms to be created go in pillars; loop through (vm.exists/absent)
+- qvm-run --passio; bootstrap a vm; send srv dir; high state; get report
+
+- runners to run specific tasks like testing above
+- different bases for dom0 / appvm?
+
+
 - Install salt via template +salt
 - Install salt via dom0
   - qvm-run copy
@@ -9,10 +21,45 @@ Qubes Management
   - qvm get-report
   - send to SaltVM
 
+Docs
+====
+qubes-manage --doc qvm.prefs
+salt-call --local qvm.prefs fc21 label=green
+salt-call --local qvm.prefs fc21
+salt-call --local --out=pprint qvm.prefs fc21
+salt-call --local --out=yaml qvm.prefs fc21
+salt-call --local --out=json qvm.prefs fc21
+salt-call --local --out=txt qvm.prefs fc21
+salt-call --local --out=key qvm.prefs fc21
+
+Bugs - To fix
+=============
+- Dependancies required to run:
+  - 1) pyhton-gnupg
+  - 2) public key imported into /etc/salt/gpgkeys
+  - 3) salt-call --local saltutil.sync_all
+  - 4) salt-call --local state.sls salt.gnupg (gets python-gnupg, imports public key)
+  - 5) salt-call --local state.highstate
+- How to deal with initial public key being imported into /etc/salt/gpgkeys
+  - 1) Just include the gpg files with key inserted
+  - 2) Install manually via gpg; make sur gpg is installed
+  - 3) salt-call --local state.sls salt.gnupg
+- When searching for a package to install (yum search) sometimes the list is
+  empty, and salt will fail.  If we issue a 'qubes-dom0-update package_nmae' in
+  this case it will be found even though not in list.  COuld be since salt may
+  clear some caches (custom module -> qubes-dom0-update)
+- When running 'salt-call --local state.sls salt.gnupg', keys are trying to be
+  imported before python-gnupg package is installed; fix ordering
+
 Salt Modules
 ============
 - qvm-run
 - start, stop, create (like qubes manager)
-- qubes-dom0-update in place of yum update
 
+Complete
+========
+- gpg verify
+- gpg import
+- qvm-prefs
+- qubes-dom0-update in place of yum update
 

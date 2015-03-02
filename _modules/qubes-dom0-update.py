@@ -58,6 +58,8 @@ __ARCHES = __ARCHES_64 + __ARCHES_32 + __ARCHES_PPC + __ARCHES_S390 + \
 __virtualname__ = 'pkg'
 
 
+# QUBES-DOM0
+# Search for 'QUBES-DOM0' for any changes related to Qubes Dom0
 def __virtual__():
     '''
     Confine this module to qubes and yum based systems
@@ -593,6 +595,18 @@ def check_db(*names, **kwargs):
             if name in provides:
                 # Package was not in avail but was found by the repoquery_cmd
                 ret[name]['found'] = True
+            # QUBES-DOM0
+            # XXX: Normally this conditional does not exist; Remove once
+            #      repoquery database can be re-built
+            elif not provides:
+                # XXX: Figure out how to rebuild repoquery cache to contain list
+                #      of all uninstalled packages
+                #
+                # Seems like repoquery database does not contain uninstalled
+                # packages -or- maybe I deleted the cache somehow
+                #
+                # Just return that the package was found so it can be installed.
+                ret[name]['found'] = True
             else:
                 ret[name]['suggestions'] = provides
     return ret
@@ -938,6 +952,7 @@ def install(name=None,
                 downgrade.append(pkgstr)
 
     if targets:
+        # QUBES-DOM0
         #cmd = 'yum -y {repo} {exclude} {branch} {gpgcheck} install {pkg}'.format(
         cmd = 'qubes-dom0-update -y {repo} {exclude} {branch} {pkg}'.format(
             repo=repo_arg,

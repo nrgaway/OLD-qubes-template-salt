@@ -9,24 +9,27 @@
 # 3) Highstate will execute all states
 # --> salt-call --local state.highstate
 #
+# 4) Highstate test mode only.  Note note all states seem to conform to test
+#    mode and may apply state anyway.  Needs more testing to confirm or not!
+# --> salt-call --local state.highstate test=True
 
 base:
   '*':
     # --- salt applications ---
-    - python_pip
-    - salt
-    - salt.gnupg
-    - salt.minion
+    # python_pip  # Not needed if salt installed via repo (yum, apt-get)
+#    - salt
+#    - salt.gnupg
+#    - salt.minion
     # salt.master
     # salt.api
     # salt.gitfs
     # salt.syndic
     # salt.halite
     # salt.minion.absent    # Not implemented
-    - salt.master_absent
-    - salt.api_absent
-    - salt.syndic_absent
-    - salt.halite_absent
+#    - salt.master_absent
+#    - salt.api_absent
+#    - salt.syndic_absent
+#    - salt.halite_absent
 
     # --- system configurations ---
     # users
@@ -36,7 +39,7 @@ base:
 
     # --- utilities ---
     # os
-    - vim
+#    - vim
 
     # --- appearance ---
     # theme

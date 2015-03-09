@@ -10,8 +10,8 @@ gnupg:
     - names:
       - python-gnupg
     - order: 1
-    - require:
-      - pkg: salt
+    #- require:
+    #  - pkg: salt
 
   gpg.import_key:
     - source: salt://dom0/nrgaway-qubes-signing-key.asc

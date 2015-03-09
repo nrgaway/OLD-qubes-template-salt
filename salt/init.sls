@@ -26,31 +26,32 @@ $with salt-dependencies:
       pkg.installed:
         - name: $SaltMap.salt
 
-  $else:
-    $with salt-pip-dependencies:
-      # python-jinja2    # APT: 2.7.2-2
-      pip.installed:
-        - names:
-          - pyzmq             # PIP: 14.0.1
-          - PyYAML            # PIP: 0.8.4
-          - pycrypto          # PIP: 2.6.1
-          - msgpack-python    # PIP: 0.3.0
-          - jinja2            # 2.7.2
-          - psutil            # not-installed
-          - wheel
-        - require:
-          - pkg: pip-dependencies
+  #$else:
+  #  $with salt-pip-dependencies:
+  #    # python-jinja2    # APT: 2.7.2-2
+  #    pip.installed:
+  #      - names:
+  #        - pyzmq             # PIP: 14.0.1
+  #        - PyYAML            # PIP: 0.8.4
+  #        - pycrypto          # PIP: 2.6.1
+  #        - msgpack-python    # PIP: 0.3.0
+  #        - jinja2            # 2.7.2
+  #        - psutil            # not-installed
+  #        - wheel
+  #      - require:
+  #        - pkg: pip-dependencies
 
-      salt:
-        # Install from git
-        pip.installed:
-          - name: git+https://github.com/saltstack/salt.git@v2014.7.0#egg=salt
-          - no_deps: True # We satisfy deps already since we cant build m2crypto on debian/ubuntu
-          - install_options: --force-installation-into-system-dir
-          - install_options: --prefix=/usr
-          - use_wheel: True
-          - upgrade: False
+  #    salt:
+  #      # Install from git
+  #      pip.installed:
+  #        - name: git+https://github.com/saltstack/salt.git@v2014.7.0#egg=salt
+  #        - no_deps: True # We satisfy deps already since we cant build m2crypto on debian/ubuntu
+  #        - install_options: --force-installation-into-system-dir
+  #        - install_options: --prefix=/usr
+  #        - use_wheel: True
+  #        - upgrade: False
 
+  # XXX: not needed for dom0
   # binddirs script
   /usr/lib/salt/bind-directories:
     file.managed:
@@ -64,6 +65,7 @@ $with salt-dependencies:
   /srv/salt/top.sls:
     file.managed:
       - source: salt://salt/files/top.sls
+      - replace: False
       - makedirs: True
       - user: root
       - group: root
